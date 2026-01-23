@@ -1,0 +1,666 @@
+extends RefCounted
+class_name SkelformBackend
+
+class ConstructOptions:
+	var position: Vector2
+	var scale: Vector2
+	var flip_y: bool
+
+	func _init(pos: Vector2 = Vector2.ZERO, s: Vector2 = Vector2.ONE, flip: bool = true):
+		position = pos
+		scale = s
+		flip_y = flip
+
+class Vertex:
+	var pos: Vector2
+	var initPos: Vector2
+	var uv: Vector2
+
+	func _init(_init_pos := Vector2.ZERO, _uv := Vector2.ZERO):
+		initPos = _init_pos
+		pos = _init_pos
+		uv = _uv
+
+class Bone:
+	var name: String
+	var id: int
+	var parent_id: int
+	var style_ids: Array
+	var tex: String
+	var rot: float
+	var scale: Vector2
+	var pos: Vector2
+	var ik_bone_ids: Array
+	var ik_mode: int
+	var ik_constraint_str: String
+	var ik_constraint: int
+	var ik_family_id: int
+	var ik_target_id: int
+	var init_rot: float
+	var init_scale: Vector2
+	var init_pos: Vector2
+	var zindex: int = 0
+	var rest_length: float = 0.0
+	
+	var binds: Array = []
+	var vertices: Array[Vertex] = []
+	var indices: PackedInt32Array
+
+	func _init(_name="", _id=0, _parent_id=-1):
+		name = _name
+		id = _id
+		parent_id = _parent_id
+		style_ids = []
+		ik_bone_ids = []
+		scale = Vector2.ONE
+		pos = Vector2.ZERO
+		init_scale = Vector2.ONE
+		init_pos = Vector2.ZERO
+
+	func copy() -> Bone:
+		var b := Bone.new(name, id, parent_id)
+		b.style_ids = style_ids.duplicate(true)
+		b.tex = tex
+		b.rot = rot
+		b.scale = scale
+		b.pos = pos
+		b.ik_bone_ids = ik_bone_ids.duplicate(true)
+		b.ik_mode = ik_mode
+		b.ik_constraint_str = ik_constraint_str
+		b.ik_constraint = ik_constraint
+		b.ik_family_id = ik_family_id
+		b.ik_target_id = ik_target_id
+		b.init_rot = init_rot
+		b.init_scale = init_scale
+		b.init_pos = init_pos
+		b.zindex = zindex
+		b.rest_length = rest_length
+		b.binds = binds.duplicate(true)
+		b.indices = indices.duplicate()
+		b.vertices = []
+		for v in vertices:
+			var nv := Vertex.new(v.initPos, v.uv)
+			nv.pos = v.pos 
+			b.vertices.append(nv)
+		return b
+
+class Keyframe:
+	var frame: int
+	var bone_id: int
+	var element: int
+	var value: float
+	func _init(f=0, b=0, e=0, v=0.0):
+		frame = f
+		bone_id = b
+		element = e
+		value = v
+
+class AnimationData:
+	var name: String
+	var keyframes: Array
+	var fps: int
+
+	func _init(_name="", _fps=24):
+		name = _name
+		fps = _fps
+		keyframes = []
+
+class TextureData:
+	var name: String
+	var offset: Vector2
+	var size: Vector2
+	var atlas_idx: int
+
+class Style:
+	var name: String
+	var textures: Array
+
+class Atlas:
+	var filename: String
+	var size: Vector2
+
+class Armature:
+	var bones: Array
+	var ik_root_ids: Array
+	var animations: Array
+	var atlases: Array
+	var styles: Array
+
+func animate(bones: Array, anims: Array, frames: Array, smooth_frames: Array) -> void:
+	for i in range(anims.size()):
+		var anim = anims[i]
+		var frame = frames[i]
+		var smooth = smooth_frames[i] if i < smooth_frames.size() else 0
+		
+		for bone in bones:
+			interpolate_bone(bone, anim.keyframes, bone.id, frame, smooth)
+		
+		for bone in bones:
+			reset_bone(bone, frame, smooth, anims)
+
+func reset_bone(bone: Bone, frame: int, smooth_frame: int, anims: Array) -> void:
+	if not is_animated("PositionX", bone.id, anims):
+		bone.pos.x = interpolate_value(bone.init_pos.x, bone.init_pos.x, frame, smooth_frame)
+	if not is_animated("PositionY", bone.id, anims):
+		bone.pos.y = interpolate_value(bone.init_pos.y, bone.init_pos.y, frame, smooth_frame)
+	if not is_animated("Rotation", bone.id, anims):
+		bone.rot = interpolate_value(bone.init_rot, bone.init_rot, frame, smooth_frame)
+	if not is_animated("ScaleX", bone.id, anims):
+		bone.scale.x = interpolate_value(bone.init_scale.x, bone.init_scale.x, frame, smooth_frame)
+	if not is_animated("ScaleY", bone.id, anims):
+		bone.scale.y = interpolate_value(bone.init_scale.y, bone.init_scale.y, frame, smooth_frame)
+
+func is_animated(property_name: String, bone_id: int, anims: Array) -> bool:
+	for anim in anims:
+		for kf in anim.keyframes:
+			if kf.bone_id == bone_id and property_matches_element(property_name, kf.element):
+				return true
+	return false
+
+func property_matches_element(prop: String, element: int) -> bool:
+	match prop:
+		"PositionX": return element == 0
+		"PositionY": return element == 1
+		"Rotation": return element == 2
+		"ScaleX":   return element == 3
+		"ScaleY":   return element == 4
+		"IkConstraint": return element == 6
+	return false
+
+func interpolate_value(current: float, target: float, frame: int, smooth_frame: int) -> float:
+	if smooth_frame <= 0:
+		return target
+	var t = float(frame) / float(smooth_frame)
+	return lerp(current, target, t)
+
+func interpolate_bone(bone: Bone, keyframes: Array, bone_id: int, frame: int, smooth_frame: int) -> void:
+	bone.pos.x = interpolate_keyframes(bone_id, bone.pos.x, keyframes, 0, frame, smooth_frame)
+	bone.pos.y = interpolate_keyframes(bone_id, bone.pos.y, keyframes, 1, frame, smooth_frame)
+	bone.rot   = interpolate_keyframes(bone_id, bone.rot,   keyframes, 2, frame, smooth_frame)
+	bone.scale.x = interpolate_keyframes(bone_id, bone.scale.x, keyframes, 3, frame, smooth_frame) 
+	bone.scale.y = interpolate_keyframes(bone_id, bone.scale.y, keyframes, 4, frame, smooth_frame) 
+	bone.tex = get_prev_keyframe_value(keyframes, bone_id, 5, frame, bone.tex)
+	bone.ik_constraint = get_prev_keyframe_value(keyframes, bone_id, 6, frame, bone.ik_constraint)
+
+func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: int, frame: int, default_val) -> Variant:
+	var prev = null
+	for kf in keyframes:
+		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
+			prev = kf
+	return prev.value if prev != null else default_val
+
+func construct(armature: Armature, options: ConstructOptions = null) -> Array:
+	if options == null:
+		options = SkelformBackend.ConstructOptions.new()
+	var rest_bones : Array = []
+	for b in armature.bones:
+		rest_bones.append(b.copy())
+
+	rest_bones = inheritance(rest_bones, {}) 
+	var bone_map : Dictionary = {}
+	for b in rest_bones:
+		bone_map[b.id] = b
+	
+	var ik_results = inverse_kinematics(rest_bones, armature.ik_root_ids, bone_map)
+	var final_bones := []
+	for b in armature.bones:
+		final_bones.append(b.copy())
+	final_bones = inheritance(final_bones, ik_results)
+	for b in final_bones:
+		b.pos *= options.scale
+		b.scale *= options.scale
+		b.pos += options.position
+
+	construct_verts(final_bones, options.scale)
+	apply_binds(final_bones, options.scale)
+	if options.flip_y:
+		_apply_flip_y(final_bones)
+
+	return final_bones
+
+func _apply_flip_y(bones: Array) -> void:
+	for b in bones:
+		b.pos.y = -b.pos.y
+		b.rot = -b.rot
+
+		for v in b.vertices:
+			v.pos.y = -v.pos.y
+			v.initPos.y = -v.initPos.y
+
+func interpolate_keyframes(bone_id: int, field: float, keyframes: Array, element: int, frame: int, smooth_frame: int) -> float:
+	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
+	var next_kf = get_next_keyframe(bone_id, element, frame, keyframes)
+	if prev_kf == null:
+		prev_kf = next_kf
+	elif next_kf == null:
+		next_kf = prev_kf
+	if prev_kf == null and next_kf == null:
+		return field
+	var total_frames = next_kf.frame - prev_kf.frame
+	var current_frame = frame - prev_kf.frame
+	var target_value = interpolate(current_frame, total_frames, prev_kf.value, next_kf.value)
+	return interpolate(current_frame, smooth_frame, prev_kf.value, target_value)
+
+func get_prev_keyframe(bone_id: int, element: int, frame: int, keyframes: Array) -> Keyframe:
+	var prev: Keyframe = null
+	for kf in keyframes:
+		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
+			if prev == null or kf.frame > prev.frame:
+				prev = kf
+	return prev
+
+func get_next_keyframe(bone_id: int, element: int, frame: int, keyframes: Array) -> Keyframe:
+	var next: Keyframe = null
+	for kf in keyframes:
+		if kf.bone_id == bone_id and kf.element == element and kf.frame > frame:
+			if next == null or kf.frame < next.frame:
+				next = kf
+	return next
+
+func apply_binds(bones: Array, options_scale: Vector2 = Vector2.ONE) -> void:
+	var bone_map := {}
+	for b in bones:
+		bone_map[b.id] = b
+	for b in bones:
+		if b.binds.is_empty():
+			continue
+		for bi in range(b.binds.size()):
+			var bind = b.binds[bi]
+			var bind_bone_id = bind.bone_id
+			if bind_bone_id == -1:
+				continue
+			var bind_bone = bone_map.get(bind_bone_id)
+			if bind_bone == null:
+				continue
+			if bind.is_path:
+				var prev_idx = max(0, bi - 1)
+				var next_idx = min(b.binds.size() - 1, bi + 1)
+				var prev_bone_id = b.binds[prev_idx].bone_id
+				var next_bone_id = b.binds[next_idx].bone_id
+				var prev_bone = bone_map.get(prev_bone_id)
+				var next_bone = bone_map.get(next_bone_id)
+				if not prev_bone or not next_bone:
+					continue
+				var prev_dir = (bind_bone.pos - prev_bone.pos).normalized()
+				var next_dir = (next_bone.pos - bind_bone.pos).normalized()
+				var prev_normal = Vector2(-prev_dir.y, prev_dir.x)
+				var next_normal = Vector2(-next_dir.y, next_dir.x)
+				var average = (prev_normal + next_normal).normalized()
+				var normal_angle = atan2(average.y, average.x)
+				for vert_info in bind.verts:
+					var v_id = vert_info.id
+					if v_id >= b.vertices.size():
+						continue
+					var vert = b.vertices[v_id]
+					var weight = vert_info.weight
+					var rotated = rotate_point(vert.initPos, normal_angle) * options_scale
+					vert.pos = bind_bone.pos + (rotated * weight)
+			else:
+				for vert_info in bind.verts:
+					var v_id = vert_info.id
+					if v_id >= b.vertices.size():
+						continue
+					var vert = b.vertices[v_id]
+					var weight = vert_info.weight
+					
+					var bind_pos = _transform_vertex(vert.initPos, bind_bone, options_scale)
+					vert.pos = vert.pos.lerp(bind_pos, weight)
+
+func _transform_vertex(pos: Vector2, bone: Bone, options_scale: Vector2 = Vector2.ONE) -> Vector2:
+	var local_pos = (pos * bone.scale) * options_scale
+	local_pos = local_pos.rotated(bone.rot)
+	var world_pos = bone.pos + local_pos
+	return world_pos
+
+func inheritance(bones: Array, ik_rots: Dictionary) -> Array:
+	var bone_map: Dictionary = {}
+	for b in bones:
+		bone_map[b.id] = b
+	for bone in bones:
+		if bone.parent_id != -1 and bone_map.has(bone.parent_id):
+			var parent = bone_map[bone.parent_id]
+			bone.pos = rotate_point(bone.pos * parent.scale, parent.rot) + parent.pos
+			bone.rot += parent.rot
+			bone.scale = bone.scale * parent.scale
+		if ik_rots.has(bone.id):
+			var ik_data = ik_rots[bone.id]
+			bone.rot = ik_data
+	return bones
+
+func inverse_kinematics(bones: Array, ik_root_ids: Array, bone_map : Dictionary) -> Dictionary:
+	var ik_rots : Dictionary = {} 
+	for id in ik_root_ids:
+		if !bone_map.has(int(id)):
+			continue
+		
+		var root_bone = bone_map.get(int(id), null)
+		if root_bone == null: continue
+		
+		if root_bone.ik_target_id == -1:
+			continue
+		
+		var chain: Array = []
+		for id_b in root_bone.ik_bone_ids:
+			chain.append(bone_map[int(id_b)])
+		if chain.is_empty():
+			continue
+
+		var target_bone = bone_map.get(root_bone.ik_target_id, null)
+		if target_bone == null:
+			continue
+		
+		var root_world_pos: Vector2 = chain[0].pos
+		for b in chain:
+			b.pos -= root_world_pos
+		var target_local = target_bone.pos - root_world_pos
+		
+		match root_bone.ik_mode:
+			0:
+				fabrik(chain, root_bone.pos, target_local)
+			1:
+				arc_ik(chain, root_bone.pos, target_local)
+		point_bones(chain)
+		apply_constraints(chain, root_bone, root_world_pos, target_bone.pos)
+		for b in range(chain.size()):
+			if b == chain.size()- 1:
+				continue
+			ik_rots[chain[b].id] = chain[b].rot
+	return ik_rots
+
+func apply_constraints(chain: Array, family: Bone, root_world: Vector2, target_world: Vector2) -> void:
+	if chain.size() < 2:
+		return
+	if family.ik_constraint == 0:
+		return
+	var root : Vector2 = Vector2.ZERO
+	var target : Vector2 = target_world - root_world
+	var joint_id = int(family.ik_bone_ids[1])
+	var joint_bone: Bone = null
+	for b in chain:
+		if b.id == joint_id:
+			joint_bone = b
+			break
+	if joint_bone == null:
+		return
+
+	var joint_dir : Vector2 = (joint_bone.pos - root).normalized()
+	var base_dir : Vector2 = (target - root).normalized()
+	var dir : float = joint_dir.x * base_dir.y - base_dir.x * joint_dir.y
+	var base_angle := atan2(base_dir.y, base_dir.x)
+	var cw : bool = family.ik_constraint == 1 and dir > 0.0
+	var ccw : bool = family.ik_constraint == 2 and dir < 0.0
+	if not (cw or ccw):
+		return
+	var bone_map := {}
+	for b in chain:
+		bone_map[b.id] = b
+
+	for id in family.ik_bone_ids:
+		var bone: Bone = bone_map.get(int(id))
+		if bone == null:
+			continue
+		bone.rot = -bone.rot + base_angle * 2.0
+
+func point_bones(chain: Array) -> void:
+	if chain.is_empty():
+		return
+	var tip_pos = chain[-1].pos
+	for i in range(chain.size() - 2, -1, -1):
+		var b = chain[i]
+		var dir = tip_pos - b.pos
+		b.rot = atan2(dir.y, dir.x)
+		tip_pos = b.pos
+	if chain.size() >= 2:
+		var last_bone = chain[-1]
+		var prev_bone = chain[-2]
+		var dir = last_bone.pos - prev_bone.pos
+		last_bone.rot = atan2(dir.y, dir.x)
+
+func fabrik(chain: Array, root: Vector2, target: Vector2) -> void:
+	var count := chain.size()
+	if count < 1:
+		return
+	var lengths := []
+	lengths.resize(count - 1)
+	for i in range(count - 1):
+		lengths[i] = (chain[i + 1].pos - chain[i].pos).length()
+
+	var next_pos = target
+	var next_length = 0.0
+	for i in range(count - 1, -1, -1):
+		var dir = (next_pos - chain[i].pos).normalized() * next_length
+		if dir.x != dir.x or dir.y != dir.y: 
+			dir = Vector2.ZERO
+		if i != 0:
+			next_length = lengths[i - 1]
+		chain[i].pos = next_pos - dir
+		next_pos = chain[i].pos
+	var prev_pos = root
+	var prev_length = 0.0
+	for i in range(count):
+		var dir = (prev_pos - chain[i].pos).normalized() * prev_length
+		if dir.x != dir.x or dir.y != dir.y: 
+			dir = Vector2.ZERO
+		if i != count - 1:
+			prev_length = lengths[i]
+		chain[i].pos = prev_pos - dir
+		prev_pos = chain[i].pos
+
+func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
+	if chain.size() < 2:
+		return
+
+	var dist := [0.0]
+	var max_length = (chain[-1].pos - root).length()
+	var curr_length = 0.0
+
+	for i in range(1, chain.size()):
+		curr_length += (chain[i].pos - chain[i-1].pos).length()
+		dist.append(curr_length / max_length)
+
+	var base = target - root
+	var base_angle = atan2(base.y, base.x)
+	var base_mag = min(base.length(), max_length)
+	var peak = max_length / base_mag
+	var valley = base_mag / max_length
+
+	for i in range(1, chain.size()):
+		var b = chain[i]
+		var pos = Vector2(
+			b.pos.x * valley,
+			root.y + (1.0 - peak) * sin(dist[i] * PI) * base_mag
+		)
+		b.pos = rotate_point(pos - root, base_angle) + root
+
+func check_bone_flip(bone_rot: float, scale: Vector2) -> float:
+	var either := scale.x < 0 or scale.y < 0
+	var both := scale.x < 0 and scale.y < 0
+	if either and not both:
+		return -bone_rot
+	return bone_rot
+
+func interpolate(current: float, max_val: float, start_val: float, end_val: float) -> float:
+	if max_val == 0 or current >= max_val:
+		return end_val
+	var t := current / max_val
+	return start_val + (end_val - start_val) * t
+
+func rotate_point(point: Vector2, rot: float) -> Vector2:
+	return Vector2(
+		point.x * cos(rot) - point.y * sin(rot),
+		point.x * sin(rot) + point.y * cos(rot)
+	)
+
+func magnitude(v: Vector2) -> float:
+	return sqrt(v.x * v.x + v.y * v.y)
+
+func construct_verts(bones: Array, options_scale: Vector2 = Vector2.ONE) -> void:
+	for bone in bones:
+		if bone.vertices.is_empty():
+			continue
+		for bi in range(bone.binds.size()):
+			var bind = bone.binds[bi]
+			var bone_id = int(bind.bone_id)
+			if bone_id == -1:
+				continue
+			var bind_bone: Bone = null
+			for b in bones:
+				if int(b.id) == bone_id:
+					bind_bone = b
+					break
+			if bind_bone == null:
+				continue
+			for v in range(bind.verts.size()):
+				var vert_info = bind.verts[v]
+				var vert_id = vert_info.id
+				var vert = bone.vertices[vert_id]
+				var weight = vert_info.weight
+				if not bind.is_path:
+					var endpos = _transform_vertex(vert.initPos, bind_bone, options_scale) - vert.pos
+					vert.pos += endpos * weight
+					continue
+				var prev_idx = max(0, bi - 1)
+				var next_idx = min(bi + 1, bone.binds.size() - 1)
+				var prev_bone: Bone = null
+				var next_bone: Bone = null
+				for b in bones:
+					if b.id == bone.binds[prev_idx].bone_id:
+						prev_bone = b
+					if b.id == bone.binds[next_idx].bone_id:
+						next_bone = b
+				if prev_bone == null or next_bone == null:
+					continue
+				var prev_dir = (bind_bone.pos - prev_bone.pos).normalized()
+				var next_dir = (next_bone.pos - bind_bone.pos).normalized()
+				var average = (Vector2(-prev_dir.y, prev_dir.x) + Vector2(-next_dir.y, next_dir.x)).normalized()
+				var normal_angle = atan2(average.y, average.x)
+				var rotated = (vert.initPos * options_scale).rotated(normal_angle)
+				vert.pos = bind_bone.pos + rotated * weight
+
+static func load_armature_from_file(path: String, img_at : Image = null) -> Dictionary:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	file.close()
+	var zip := ZIPReader.new()
+	var err := zip.open(path)
+	if err != OK:
+		return {}
+	if !zip.file_exists("armature.json"):
+		zip.close()
+		return {}
+	var json_text = zip.read_file("armature.json").get_string_from_utf8()
+	var atlas = zip.read_file("atlas0.png")
+	zip.close()
+	var img : Image = Image.new()
+	img.load_png_from_buffer(atlas)
+
+	var data = JSON.parse_string(json_text)
+	if typeof(data) != TYPE_DICTIONARY:
+		return {}
+
+	return {arm = build_armature_from_dict(data), img_at = img}
+
+static func build_armature_from_dict(data: Dictionary) -> Armature:
+	var arm := Armature.new()
+	var bones = []
+	arm.ik_root_ids = data.get("ik_root_ids", [])
+	arm.animations = []
+	arm.atlases = []
+	arm.styles = []
+	var texture_size_map := {}
+	for style_data in data.get("styles", []):
+		var s : Style = Style.new()
+		s.name = style_data.get("name", "Default")
+		s.textures = []
+		for tex_data in style_data.get("textures", []):
+			var t : TextureData = TextureData.new()
+			t.name = tex_data.get("name", "")
+			var offset = tex_data.get("offset", {"x": 0, "y": 0})
+			t.offset = Vector2(offset.x, offset.y)
+			var size = tex_data.get("size", {"x": 0, "y": 0})
+			t.size = Vector2(size.x, size.y)
+			t.atlas_idx = tex_data.get("atlas_idx", 0)
+			s.textures.append(t)
+			texture_size_map[t.name] = t.size
+		arm.styles.append(s)
+
+	for bone_data in data.get("bones", []):
+		var b := Bone.new()
+		b.id = int(bone_data.get("id", 0))
+		b.parent_id = int(bone_data.get("parent_id", -1))
+		b.name = String(bone_data.get("name", ""))
+
+		var pos_d = bone_data.get("pos", {})
+		var scale_d = bone_data.get("scale", {})
+		b.pos = Vector2(pos_d.get("x", 0.0), pos_d.get("y", 0.0))
+		b.scale = Vector2(scale_d.get("x", 1.0), scale_d.get("y", 1.0))
+		b.rot = float(bone_data.get("rot", 0.0))
+
+		var init_pos_d = bone_data.get("init_pos", pos_d)
+		var init_scale_d = bone_data.get("init_scale", scale_d)
+		b.init_pos = Vector2(init_pos_d.get("x", 0.0), init_pos_d.get("y", 0.0))
+		b.init_scale = Vector2(init_scale_d.get("x", 1.0), init_scale_d.get("y", 1.0))
+		b.init_rot = float(bone_data.get("init_rot", b.rot))
+
+		b.tex = String(bone_data.get("tex", ""))
+		b.zindex = int(bone_data.get("zindex", 0))
+
+		b.ik_family_id = int(bone_data.get("ik_family_id", -1))
+		b.ik_mode = int(bone_data.get("ik_mode", 0))
+		b.ik_target_id = int(bone_data.get("ik_target_id", -1))
+		b.ik_constraint = int(bone_data.get("ik_constraint", 0))
+		b.ik_constraint_str = String(bone_data.get("ik_constraint_str", "None"))
+
+		var ik_ids = bone_data.get("ik_bone_ids", [])
+		b.ik_bone_ids = ik_ids.duplicate(true)
+		b.binds = []
+		for bind_data in bone_data.get("binds", []):
+			b.binds.append({
+				"bone_id": int(bind_data.get("bone_id", -1)),
+				"is_path": bool(bind_data.get("is_path", false)),
+				"verts": bind_data.get("verts", []).duplicate(true),
+			})
+		b.vertices = []
+		for v_data in bone_data.get("vertices", []):
+			var px = float(v_data["pos"]["x"])
+			var py = float(v_data["pos"]["y"])
+			var ux = float(v_data["uv"]["x"])
+			var uy = float(v_data["uv"]["y"])
+			b.vertices.append(Vertex.new(Vector2(px, py), Vector2(ux, uy)))
+		b.indices = PackedInt32Array()
+		for idx in bone_data.get("indices", []):
+			b.indices.append(int(idx))
+		if not b.vertices.is_empty() and b.indices.is_empty():
+			var poly := PackedVector2Array()
+			for v in b.vertices:
+				poly.append(v.pos)
+			if poly.size() >= 3:
+				var tri := Geometry2D.triangulate_polygon(poly)
+				if not tri.is_empty():
+					b.indices = PackedInt32Array(tri)
+		bones.append(b)
+
+	for anim_data in data.get("animations", []):
+		var anim : AnimationData = AnimationData.new()
+		anim.name = anim_data.get("name", "")
+		anim.fps = anim_data.get("fps", 24)
+		anim.keyframes = []
+		for kf_data in anim_data.get("keyframes", []):
+			var kf := Keyframe.new()
+			kf.frame = kf_data.get("frame", 0)
+			kf.bone_id = kf_data.get("bone_id", 0)
+			kf.element = kf_data.get("element", 0)
+			kf.value = kf_data.get("value", 0.0)
+			anim.keyframes.append(kf)
+		arm.animations.append(anim)
+		
+	for atlas_data in data.get("atlases", []):
+		var a : Atlas = Atlas.new()
+		a.filename = atlas_data.get("filename", "")
+		var size = atlas_data.get("size", {"x": 0, "y": 0})
+		a.size = Vector2(size.x, size.y)
+		arm.atlases.append(a)
+		
+	arm.bones = bones.duplicate_deep(1)
+	return arm

@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://b88xkmris26bs"]
+
+[ext_resource type="Script" uid="uid://bttdudx216p8f" path="res://addons/skfplayer/skelform_player.gd" id="1_t6lng"]
+
+[node name="Scene" type="Node2D" unique_id=913070359]
+
+[node name="Skellina" type="Node2D" parent="." unique_id=1227293270]
+position = Vector2(344, 393)
+script = ExtResource("1_t6lng")
+file = "res://_skellina.skf"
+fps = 30
+animation_index = 2
+model_scale = Vector2(0.15, 0.15)
+model_style = 1
+
+[node name="Skellington" type="Node2D" parent="." unique_id=680816443]
+position = Vector2(710, 344)
+script = ExtResource("1_t6lng")
+file = "res://_skellington.skf"
+fps = 30
+animation_index = 1
+model_scale = Vector2(0.15, 0.15)
