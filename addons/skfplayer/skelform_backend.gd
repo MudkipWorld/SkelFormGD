@@ -300,18 +300,26 @@ func inheritance(bones: Array, ik_rots: Dictionary) -> Array:
 	var bone_map: Dictionary = {}
 	for b in bones:
 		bone_map[b.id] = b
+	
 	for i in range(bones.size()):
-		var bone = bones[i]
-		if bone.parent_id == -1 or !bone_map.has(bone.parent_id): continue
-		var parent = bone_map[bone.parent_id]
-		var parent_rot = check_bone_flip(parent.rot, parent.scale)
-		bone.rot += parent_rot
-		bone.scale *= parent.scale
+		var bone : Bone = bones[i]
+		if bone.parent_id == -1 or not bone_map.has(bone.parent_id):
+			continue
+		var parent : Bone = bone_map[bone.parent_id]
+		var flip_x = parent.init_scale.x < 0
+		var flip_y = parent.init_scale.y < 0
+		var parent_rot = check_bone_flip(parent.rot, abs( parent.init_scale))
+		
 		bone.pos *= parent.scale
-		bone.pos = rotate_point(bone.pos, parent_rot) 
-		bone.pos +=+ parent.pos
+		bone.pos = rotate_point(bone.pos, parent_rot)
+		bone.rot += parent_rot
+		bone.scale = abs(bone.scale)* parent.scale
+		bone.pos += parent.pos
+
 		if ik_rots.has(bone.id):
 			bone.rot = ik_rots[bone.id]
+		
+		
 	return bones
 
 func inverse_kinematics(bones: Array, ik_root_ids: Array, bone_map : Dictionary) -> Dictionary:
@@ -460,9 +468,9 @@ func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
 		b.pos = rotate_point(pos - root, base_angle) + root
 
 func check_bone_flip(bone_rot: float, scale: Vector2) -> float:
-	var either := scale.x < 0 or scale.y < 0
-	var both := scale.x < 0 and scale.y < 0
-	if either and not both:
+	var either : bool = scale.x < 0 or scale.y < 0
+	var both : bool = scale.x < 0 and scale.y < 0
+	if either && !both:
 		return -bone_rot
 	return bone_rot
 
@@ -479,9 +487,9 @@ func magnitude(v: Vector2) -> float:
 	return sqrt(v.x * v.x + v.y * v.y)
 
 func inherit_vert(pos, bone):
-	pos = pos*bone.scale
-	pos = rotate_point(pos, bone.rot)
-	pos = pos + bone.pos
+	var rot = check_bone_flip(bone.rot, abs(bone.init_scale))
+	pos = rotate_point(pos, rot)
+	pos += bone.pos
 	return pos
 
 static func load_armature_from_file(path: String, img_at : Image = null) -> Dictionary:
