@@ -10,9 +10,11 @@ var img_atlas : Image = null
 var text_atlases : Array = []
 var time_accum : float = 0.0
 var prev_frame : int = 0
+var frame_skip_count : int = 0
 
 @export var file: String
 @export var fps: int = 24
+@export var frame_skip: int = 2
 @export var animation_index : int = 0
 @export var model_scale : Vector2 = Vector2(0.1, 0.1)
 @export var model_style: int = 0:
@@ -31,7 +33,7 @@ func _ready():
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	if file.is_empty():
 		return
-	var dict = SkelformBackend.load_armature_from_file(file, img_atlas)
+	var dict = SkelformBackend.load_armature_from_file(file)
 	armature = dict.arm
 	img_atlas = dict.img_at
 	if img_atlas:
@@ -51,6 +53,7 @@ func _ready():
 	bone_texture_results = setup_bone_textures(armature.bones, armature.styles)
 
 func _physics_process(delta: float) -> void:
+	frame_skip_count += 1
 	if not armature or armature.animations.is_empty():
 		return
 	if animation_index < 0 or animation_index >= armature.animations.size(): 
@@ -63,11 +66,15 @@ func _physics_process(delta: float) -> void:
 	var frame = int(time_accum * fps) % anim_length
 	if prev_frame == frame:
 		return
+		
+	prev_frame = frame
+	if frame_skip_count < frame_skip:
+		return
 	var opts = SkelformBackend.ConstructOptions.new(Vector2(0, 0), model_scale, true)
 	backend.animate(armature.bones, [anim], [frame], [1])
 	solved_bones = backend.construct(armature, opts)
 	queue_redraw()
-	prev_frame = frame
+	frame_skip_count = 0
 
 func _draw() -> void:
 	if solved_bones.is_empty():

@@ -206,14 +206,15 @@ func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 	for b in armature.bones:
 		final_bones.append(b.copy())
 	final_bones = inheritance(final_bones, ik_results)
-	for b in final_bones:
-		b.pos *= options.scale
-		b.scale *= options.scale
-		b.pos += options.position
-
-	construct_verts(final_bones, options.scale)
-	apply_binds(final_bones, options.scale)
+	construct_verts(final_bones)
+	
 	if options.flip_y:
+		for b in final_bones:
+			b.pos *= options.scale
+			b.scale *= options.scale
+			for v in b.vertices:
+				v.pos *= options.scale
+				v.initPos *= options.scale
 		_apply_flip_y(final_bones)
 
 	return final_bones
@@ -222,7 +223,6 @@ func _apply_flip_y(bones: Array) -> void:
 	for b in bones:
 		b.pos.y = -b.pos.y
 		b.rot = -b.rot
-
 		for v in b.vertices:
 			v.pos.y = -v.pos.y
 			v.initPos.y = -v.initPos.y
@@ -257,74 +257,61 @@ func get_next_keyframe(bone_id: int, element: int, frame: int, keyframes: Array)
 				next = kf
 	return next
 
-func apply_binds(bones: Array, options_scale: Vector2 = Vector2.ONE) -> void:
+func construct_verts(bones: Array) -> void:
 	var bone_map := {}
 	for b in bones:
 		bone_map[b.id] = b
 	for b in bones:
-		if b.binds.is_empty():
-			continue
+		for vert in b.vertices:
+			vert.pos = inherit_vert(vert.initPos, b)
 		for bi in range(b.binds.size()):
 			var bind = b.binds[bi]
-			var bind_bone_id = bind.bone_id
-			if bind_bone_id == -1:
+			if bind.bone_id == -1:
 				continue
-			var bind_bone = bone_map.get(bind_bone_id)
+			var bind_bone = bone_map.get(bind.bone_id)
 			if bind_bone == null:
 				continue
-			if bind.is_path:
-				var prev_idx = max(0, bi - 1)
-				var next_idx = min(b.binds.size() - 1, bi + 1)
-				var prev_bone_id = b.binds[prev_idx].bone_id
-				var next_bone_id = b.binds[next_idx].bone_id
-				var prev_bone = bone_map.get(prev_bone_id)
-				var next_bone = bone_map.get(next_bone_id)
-				if not prev_bone or not next_bone:
+			for vert_info in bind.verts:
+				var vert_id = vert_info.id
+				if vert_id >= b.vertices.size():
 					continue
-				var prev_dir = (bind_bone.pos - prev_bone.pos).normalized()
-				var next_dir = (next_bone.pos - bind_bone.pos).normalized()
-				var prev_normal = Vector2(-prev_dir.y, prev_dir.x)
-				var next_normal = Vector2(-next_dir.y, next_dir.x)
-				var average = (prev_normal + next_normal).normalized()
-				var normal_angle = atan2(average.y, average.x)
-				for vert_info in bind.verts:
-					var v_id = vert_info.id
-					if v_id >= b.vertices.size():
+				var vert = b.vertices[vert_id]
+				var weight = vert_info.weight
+				if bind.is_path:
+					var prev_idx = max(0, bi - 1)
+					var next_idx = min(b.binds.size() - 1, bi + 1)
+					var prev_bone = bone_map.get(b.binds[prev_idx].bone_id)
+					var next_bone = bone_map.get(b.binds[next_idx].bone_id)
+					if not prev_bone or not next_bone:
 						continue
-					var vert = b.vertices[v_id]
-					var weight = vert_info.weight
-					var rotated = rotate_point(vert.initPos, normal_angle) * options_scale
-					vert.pos = bind_bone.pos + (rotated * weight)
-			else:
-				for vert_info in bind.verts:
-					var v_id = vert_info.id
-					if v_id >= b.vertices.size():
-						continue
-					var vert = b.vertices[v_id]
-					var weight = vert_info.weight
-					
-					var bind_pos = _transform_vertex(vert.initPos, bind_bone, options_scale)
-					vert.pos = vert.pos.lerp(bind_pos, weight)
-
-func _transform_vertex(pos: Vector2, bone: Bone, options_scale: Vector2 = Vector2.ONE) -> Vector2:
-	var local_pos = (pos * bone.scale) * options_scale
-	local_pos = local_pos.rotated(bone.rot)
-	var world_pos = bone.pos + local_pos
-	return world_pos
+					var prev_dir = (bind_bone.pos - prev_bone.pos).normalized()
+					var next_dir = (next_bone.pos - bind_bone.pos).normalized()
+					var prev_norm = Vector2(-prev_dir.y, prev_dir.x)
+					var next_norm = Vector2(-next_dir.y, next_dir.x)
+					var average = (prev_norm + next_norm).normalized()
+					var norm_angle = atan2(average.y, average.x)
+					var rotated = rotate_point(vert.initPos, norm_angle)
+					vert.pos = bind_bone.pos + rotated * weight
+				else:
+					var world_pos = inherit_vert(vert.initPos, bind_bone)
+					vert.pos = vert.pos.lerp(world_pos, weight)
 
 func inheritance(bones: Array, ik_rots: Dictionary) -> Array:
 	var bone_map: Dictionary = {}
 	for b in bones:
 		bone_map[b.id] = b
-	for bone in bones:
-		if bone.parent_id != -1 and bone_map.has(bone.parent_id):
-			var parent = bone_map[bone.parent_id]
-			bone.pos = rotate_point(bone.pos * parent.scale, parent.rot) + parent.pos
-			bone.rot += parent.rot
-			bone.scale = bone.scale * parent.scale
+	for i in range(bones.size()):
+		var bone = bones[i]
+		if bone.parent_id == -1 or !bone_map.has(bone.parent_id): continue
+		var parent = bone_map[bone.parent_id]
+		var parent_rot = check_bone_flip(parent.rot, parent.scale)
+		bone.rot += parent_rot
+		bone.scale *= parent.scale
+		bone.pos *= parent.scale
+		bone.pos = rotate_point(bone.pos, parent_rot) 
+		bone.pos +=+ parent.pos
 		if ik_rots.has(bone.id):
-			var ik_data = ik_rots[bone.id]
-			bone.rot = ik_data
+			bone.rot = ik_rots[bone.id]
 	return bones
 
 func inverse_kinematics(bones: Array, ik_root_ids: Array, bone_map : Dictionary) -> Dictionary:
@@ -486,56 +473,16 @@ func interpolate(current: float, max_val: float, start_val: float, end_val: floa
 	return start_val + (end_val - start_val) * t
 
 func rotate_point(point: Vector2, rot: float) -> Vector2:
-	return Vector2(
-		point.x * cos(rot) - point.y * sin(rot),
-		point.x * sin(rot) + point.y * cos(rot)
-	)
+	return Vector2(point.x * cos(rot) - point.y * sin(rot),point.x * sin(rot) + point.y * cos(rot))
 
 func magnitude(v: Vector2) -> float:
 	return sqrt(v.x * v.x + v.y * v.y)
 
-func construct_verts(bones: Array, options_scale: Vector2 = Vector2.ONE) -> void:
-	for bone in bones:
-		if bone.vertices.is_empty():
-			continue
-		for bi in range(bone.binds.size()):
-			var bind = bone.binds[bi]
-			var bone_id = int(bind.bone_id)
-			if bone_id == -1:
-				continue
-			var bind_bone: Bone = null
-			for b in bones:
-				if int(b.id) == bone_id:
-					bind_bone = b
-					break
-			if bind_bone == null:
-				continue
-			for v in range(bind.verts.size()):
-				var vert_info = bind.verts[v]
-				var vert_id = vert_info.id
-				var vert = bone.vertices[vert_id]
-				var weight = vert_info.weight
-				if not bind.is_path:
-					var endpos = _transform_vertex(vert.initPos, bind_bone, options_scale) - vert.pos
-					vert.pos += endpos * weight
-					continue
-				var prev_idx = max(0, bi - 1)
-				var next_idx = min(bi + 1, bone.binds.size() - 1)
-				var prev_bone: Bone = null
-				var next_bone: Bone = null
-				for b in bones:
-					if b.id == bone.binds[prev_idx].bone_id:
-						prev_bone = b
-					if b.id == bone.binds[next_idx].bone_id:
-						next_bone = b
-				if prev_bone == null or next_bone == null:
-					continue
-				var prev_dir = (bind_bone.pos - prev_bone.pos).normalized()
-				var next_dir = (next_bone.pos - bind_bone.pos).normalized()
-				var average = (Vector2(-prev_dir.y, prev_dir.x) + Vector2(-next_dir.y, next_dir.x)).normalized()
-				var normal_angle = atan2(average.y, average.x)
-				var rotated = (vert.initPos * options_scale).rotated(normal_angle)
-				vert.pos = bind_bone.pos + rotated * weight
+func inherit_vert(pos, bone):
+	pos = pos*bone.scale
+	pos = rotate_point(pos, bone.rot)
+	pos = pos + bone.pos
+	return pos
 
 static func load_armature_from_file(path: String, img_at : Image = null) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
