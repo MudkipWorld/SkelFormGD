@@ -240,17 +240,14 @@ func get_prev_keyframe(bone_id: int, element: int, frame: int, keyframes: Array)
 	var prev: Keyframe = null
 	for kf in keyframes:
 		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
-			if prev == null or kf.frame > prev.frame:
-				prev = kf
+			prev = kf
 	return prev
 
 func get_next_keyframe(bone_id: int, element: int, frame: int, keyframes: Array) -> Keyframe:
-	var next: Keyframe = null
 	for kf in keyframes:
 		if kf.bone_id == bone_id and kf.element == element and kf.frame > frame:
-			if next == null or kf.frame < next.frame:
-				next = kf
-	return next
+			return kf
+	return null
 
 func construct_verts(bones: Array) -> void:
 	var bone_map := {}
