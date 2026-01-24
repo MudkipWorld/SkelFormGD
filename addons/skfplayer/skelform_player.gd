@@ -20,8 +20,6 @@ var frame_skip_count : int = 0
 @export var model_style: int = 0
 @export var debug : bool = false
 
-var bone_texture_results : Dictionary = {}
-
 func _ready():
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	if file.is_empty():
@@ -42,8 +40,6 @@ func _ready():
 			anim_length = 0
 	else:
 		anim_length = 0
-	
-	bone_texture_results = setup_bone_textures(armature.bones, armature.styles)
 
 func _physics_process(delta: float) -> void:
 	frame_skip_count += 1
@@ -78,10 +74,8 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 	if bones.is_empty():
 		return
 	bones.sort_custom(func(a, b): return a.zindex < b.zindex)
-	if bone_texture_results.is_empty():
-		bone_texture_results = setup_bone_textures(solved_bones, armature.styles)
-		
-	var final_textures = bone_texture_results
+
+	var final_textures = setup_bone_textures(solved_bones, armature.styles)
 	
 	for b in bones:
 		if not final_textures.has(b.id):
