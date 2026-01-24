@@ -208,8 +208,8 @@ func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 		b.pos.y = -b.pos.y
 		b.rot = -b.rot
 
-		b.pos *= options.scale
 		b.scale *= options.scale
+		b.pos *= options.scale
 		b.pos += options.position
 
 		check_bone_flip(b, options.scale)

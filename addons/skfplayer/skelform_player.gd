@@ -103,7 +103,7 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 		else:
 			var region : Rect2 = Rect2(tex.offset, tex.size)
 			var size = tex.size * b.scale
-			var push_center = size * 0.5
+			var push_center = abs(size) * 0.5
 			draw_set_transform(b.pos, b.rot, Vector2.ONE)
 			draw_texture_rect_region(atlas, Rect2(-push_center, size), region)
 			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
