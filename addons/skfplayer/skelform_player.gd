@@ -59,8 +59,6 @@ var frame_skip_count : int = 0
 		debug = is_debug
 		queue_redraw()
 
-var bone_texture_results : Dictionary = {}
-
 func _ready():
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	if file.is_empty():
@@ -154,7 +152,8 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 	if bones.is_empty():
 		return
 	bones.sort_custom(func(a, b): return a.zindex < b.zindex)
-	var final_textures = bone_texture_results
+
+	var final_textures = setup_bone_textures(solved_bones, armature.styles)
 	
 	for b in bones:
 		if not final_textures.has(b.id):
@@ -169,7 +168,7 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 		else:
 			var region : Rect2 = Rect2(tex.offset, tex.size)
 			var size = tex.size * b.scale
-			var push_center = size * 0.5
+			var push_center = abs(size) * 0.5
 			draw_set_transform(b.pos, b.rot, Vector2.ONE)
 			draw_set_transform(b.pos, b.rot, Vector2.ONE)
 			draw_texture_rect_region(atlas, Rect2(-push_center, size), region)

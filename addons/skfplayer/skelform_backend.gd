@@ -4,12 +4,10 @@ class_name SkelformBackend
 class ConstructOptions:
 	var position: Vector2
 	var scale: Vector2
-	var flip_y: bool
 
 	func _init(pos: Vector2 = Vector2.ZERO, s: Vector2 = Vector2.ONE, flip: bool = true):
 		position = pos
 		scale = s
-		flip_y = flip
 
 class Vertex:
 	var pos: Vector2
@@ -40,7 +38,6 @@ class Bone:
 	var init_scale: Vector2
 	var init_pos: Vector2
 	var zindex: int = 0
-	var rest_length: float = 0.0
 	
 	var binds: Array = []
 	var vertices: Array[Vertex] = []
@@ -74,7 +71,6 @@ class Bone:
 		b.init_scale = init_scale
 		b.init_pos = init_pos
 		b.zindex = zindex
-		b.rest_length = rest_length
 		b.binds = binds.duplicate(true)
 		b.indices = indices.duplicate()
 		b.vertices = []
@@ -197,39 +193,32 @@ func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 		rest_bones.append(b.copy())
 
 	rest_bones = inheritance(rest_bones, {}) 
-	var bone_map : Dictionary = {}
-	for b in rest_bones:
-		bone_map[b.id] = b
 	
-	var ik_results = inverse_kinematics(armature.ik_root_ids, bone_map)
+	var ik_results = inverse_kinematics(rest_bones, armature.ik_root_ids)
 	var final_bones := []
 	for b in armature.bones:
 		final_bones.append(b.copy())
 	final_bones = inheritance(final_bones, ik_results)
 	construct_verts(final_bones)
 	
-	if options.flip_y:
-		for b in final_bones:
-			b.pos *= options.scale
-			b.scale *= options.scale
-			b.pos += options.position
-			for v in b.vertices:
-				v.pos *= options.scale
-				v.initPos *= options.scale
-				v.pos += options.position
-				v.initPos += options.position
-				
-		apply_flip_y(final_bones)
-
-	return final_bones
-
-func apply_flip_y(bones: Array) -> void:
-	for b in bones:
+	for b in final_bones:
+		# flip Y, since Godot uses -y as positive but SkelForm uses +y
 		b.pos.y = -b.pos.y
 		b.rot = -b.rot
+
+		b.scale *= options.scale
+		b.pos *= options.scale
+		b.pos += options.position
+
+		check_bone_flip(b, options.scale)
+		
 		for v in b.vertices:
+			# ditto above for vertices
 			v.pos.y = -v.pos.y
-			v.initPos.y = -v.initPos.y
+
+			v.pos *= options.scale
+
+	return final_bones
 
 func interpolate_keyframes(bone_id: int, field: float, keyframes: Array, element: int, frame: int, smooth_frame: int) -> float:
 	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
@@ -249,17 +238,14 @@ func get_prev_keyframe(bone_id: int, element: int, frame: int, keyframes: Array)
 	var prev: Keyframe = null
 	for kf in keyframes:
 		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
-			if prev == null or kf.frame > prev.frame:
-				prev = kf
+			prev = kf
 	return prev
 
 func get_next_keyframe(bone_id: int, element: int, frame: int, keyframes: Array) -> Keyframe:
-	var next: Keyframe = null
 	for kf in keyframes:
 		if kf.bone_id == bone_id and kf.element == element and kf.frame > frame:
-			if next == null or kf.frame < next.frame:
-				next = kf
-	return next
+			return kf
+	return null
 
 func construct_verts(bones: Array) -> void:
 	var bone_map := {}
@@ -301,38 +287,27 @@ func construct_verts(bones: Array) -> void:
 					vert.pos = vert.pos.lerp(world_pos, weight)
 
 func inheritance(bones: Array, ik_rots: Dictionary) -> Array:
-	var bone_map: Dictionary = {}
-	for b in bones:
-		bone_map[b.id] = b
-	
 	for i in range(bones.size()):
 		var bone : Bone = bones[i]
-		if bone.parent_id == -1 or not bone_map.has(bone.parent_id):
+		if bone.parent_id == -1:
 			continue
-		var parent : Bone = bone_map[bone.parent_id]
-		var flip_x = parent.init_scale.x < 0
-		var flip_y = parent.init_scale.y < 0
-		var parent_rot = check_bone_flip(parent.rot, abs( parent.init_scale))
+		var parent : Bone = bones[bone.parent_id]
 		
+		bone.rot += parent.rot
+		bone.scale *= parent.scale
 		bone.pos *= parent.scale
-		bone.pos = rotate_point(bone.pos, parent_rot)
-		bone.rot += parent_rot
-		bone.scale = abs(bone.scale)* parent.scale
+		bone.pos = rotate_point(bone.pos, parent.rot)
 		bone.pos += parent.pos
 
 		if ik_rots.has(bone.id):
 			bone.rot = ik_rots[bone.id]
-		
-		
+				
 	return bones
 
-func inverse_kinematics(ik_root_ids: Array, bone_map : Dictionary) -> Dictionary:
+func inverse_kinematics(bones: Array, ik_root_ids: Array) -> Dictionary:
 	var ik_rots : Dictionary = {} 
 	for id in ik_root_ids:
-		if !bone_map.has(int(id)):
-			continue
-		
-		var root_bone = bone_map.get(int(id), null)
+		var root_bone = bones[id]
 		if root_bone == null: continue
 		
 		if root_bone.ik_target_id == -1:
@@ -340,65 +315,45 @@ func inverse_kinematics(ik_root_ids: Array, bone_map : Dictionary) -> Dictionary
 		
 		var chain: Array = []
 		for id_b in root_bone.ik_bone_ids:
-			chain.append(bone_map[int(id_b)])
+			chain.append(bones[id_b])
 		if chain.is_empty():
 			continue
 
-		var target_bone = bone_map.get(root_bone.ik_target_id, null)
+		var target_bone = bones[root_bone.ik_target_id]
 		if target_bone == null:
 			continue
 		
-		var root_world_pos: Vector2 = chain[0].pos
-		for b in chain:
-			b.pos -= root_world_pos
-		var target_local = target_bone.pos - root_world_pos
-		
 		match root_bone.ik_mode:
 			0:
-				fabrik(chain, root_bone.pos, target_local)
+				# run FABRIK multiple times, for accuracy
+				for i in range(10):
+					fabrik(chain, root_bone.pos, target_bone.pos)
 			1:
-				arc_ik(chain, root_bone.pos, target_local)
+				arc_ik(chain, root_bone.pos, target_bone.pos)
 		point_bones(chain)
-		apply_constraints(chain, root_bone, root_world_pos, target_bone.pos)
+		apply_constraints(chain, root_bone, root_bone.pos, target_bone.pos)
 		for b in range(chain.size()):
 			if b == chain.size()- 1:
 				continue
 			ik_rots[chain[b].id] = chain[b].rot
 	return ik_rots
 
-func apply_constraints(chain: Array, family: Bone, root_world: Vector2, target_world: Vector2) -> void:
+func apply_constraints(chain: Array, family: Bone, root: Vector2, target: Vector2) -> void:
 	if chain.size() < 2:
 		return
 	if family.ik_constraint == 0:
 		return
-	var root : Vector2 = Vector2.ZERO
-	var target : Vector2 = target_world - root_world
-	var joint_id = int(family.ik_bone_ids[1])
-	var joint_bone: Bone = null
-	for b in chain:
-		if b.id == joint_id:
-			joint_bone = b
-			break
-	if joint_bone == null:
-		return
 
-	var joint_dir : Vector2 = (joint_bone.pos - root).normalized()
+	var joint_dir : Vector2 = (chain[1].pos - root).normalized()
 	var base_dir : Vector2 = (target - root).normalized()
 	var dir : float = joint_dir.x * base_dir.y - base_dir.x * joint_dir.y
 	var base_angle := atan2(base_dir.y, base_dir.x)
 	var cw : bool = family.ik_constraint == 1 and dir > 0.0
 	var ccw : bool = family.ik_constraint == 2 and dir < 0.0
-	if not (cw or ccw):
-		return
-	var bone_map := {}
-	for b in chain:
-		bone_map[b.id] = b
 
-	for id in family.ik_bone_ids:
-		var bone: Bone = bone_map.get(int(id))
-		if bone == null:
-			continue
-		bone.rot = -bone.rot + base_angle * 2.0
+	if cw or ccw:
+		for bone in chain:
+			bone.rot = -bone.rot + base_angle * 2.0
 
 func point_bones(chain: Array) -> void:
 	if chain.is_empty():
@@ -416,32 +371,25 @@ func point_bones(chain: Array) -> void:
 		last_bone.rot = atan2(dir.y, dir.x)
 
 func fabrik(chain: Array, root: Vector2, target: Vector2) -> void:
-	var count := chain.size()
-	if count < 1:
-		return
-	var lengths := []
-	lengths.resize(count - 1)
-	for i in range(count - 1):
-		lengths[i] = (chain[i + 1].pos - chain[i].pos).length()
-
 	var next_pos = target
 	var next_length = 0.0
-	for i in range(count - 1, -1, -1):
+	for i in range(chain.size() - 1, -1, -1):
 		var dir = (next_pos - chain[i].pos).normalized() * next_length
 		if dir.x != dir.x or dir.y != dir.y: 
 			dir = Vector2.ZERO
 		if i != 0:
-			next_length = lengths[i - 1]
+			next_length = magnitude(chain[i].pos - chain[i - 1].pos)
 		chain[i].pos = next_pos - dir
 		next_pos = chain[i].pos
+
 	var prev_pos = root
 	var prev_length = 0.0
-	for i in range(count):
+	for i in range(chain.size()):
 		var dir = (prev_pos - chain[i].pos).normalized() * prev_length
 		if dir.x != dir.x or dir.y != dir.y: 
 			dir = Vector2.ZERO
-		if i != count - 1:
-			prev_length = lengths[i]
+		if i != chain.size() - 1:
+			prev_length = magnitude(chain[i].pos - chain[i + 1].pos)
 		chain[i].pos = prev_pos - dir
 		prev_pos = chain[i].pos
 
@@ -471,12 +419,11 @@ func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
 		)
 		b.pos = rotate_point(pos - root, base_angle) + root
 
-func check_bone_flip(bone_rot: float, scale: Vector2) -> float:
+func check_bone_flip(bone: Bone, scale: Vector2):
 	var either : bool = scale.x < 0 or scale.y < 0
 	var both : bool = scale.x < 0 and scale.y < 0
 	if either && !both:
-		return -bone_rot
-	return bone_rot
+		bone.rot = -bone.rot
 
 func interpolate(current: float, max_val: float, start_val: float, end_val: float) -> float:
 	if max_val == 0 or current >= max_val:
@@ -491,8 +438,7 @@ func magnitude(v: Vector2) -> float:
 	return sqrt(v.x * v.x + v.y * v.y)
 
 func inherit_vert(pos, bone):
-	var rot = check_bone_flip(bone.rot, abs(bone.init_scale))
-	pos = rotate_point(pos, rot)
+	pos = rotate_point(pos, bone.rot)
 	pos += bone.pos
 	return pos
 
