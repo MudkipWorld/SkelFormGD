@@ -201,7 +201,7 @@ func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 	for b in rest_bones:
 		bone_map[b.id] = b
 	
-	var ik_results = inverse_kinematics(rest_bones, armature.ik_root_ids, bone_map)
+	var ik_results = inverse_kinematics(armature.ik_root_ids, bone_map)
 	var final_bones := []
 	for b in armature.bones:
 		final_bones.append(b.copy())
@@ -212,14 +212,18 @@ func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 		for b in final_bones:
 			b.pos *= options.scale
 			b.scale *= options.scale
+			b.pos += options.position
 			for v in b.vertices:
 				v.pos *= options.scale
 				v.initPos *= options.scale
-		_apply_flip_y(final_bones)
+				v.pos += options.position
+				v.initPos += options.position
+				
+		apply_flip_y(final_bones)
 
 	return final_bones
 
-func _apply_flip_y(bones: Array) -> void:
+func apply_flip_y(bones: Array) -> void:
 	for b in bones:
 		b.pos.y = -b.pos.y
 		b.rot = -b.rot
@@ -322,7 +326,7 @@ func inheritance(bones: Array, ik_rots: Dictionary) -> Array:
 		
 	return bones
 
-func inverse_kinematics(bones: Array, ik_root_ids: Array, bone_map : Dictionary) -> Dictionary:
+func inverse_kinematics(ik_root_ids: Array, bone_map : Dictionary) -> Dictionary:
 	var ik_rots : Dictionary = {} 
 	for id in ik_root_ids:
 		if !bone_map.has(int(id)):
