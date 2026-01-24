@@ -6,7 +6,7 @@
 
 [node name="Skellina" type="Node2D" parent="." unique_id=1227293270]
 physics_interpolation_mode = 1
-position = Vector2(344, 393)
+position = Vector2(173, 393)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
 auto_play = true
@@ -17,10 +17,24 @@ animation_index = 2
 
 [node name="Skellington" type="Node2D" parent="." unique_id=680816443]
 physics_interpolation_mode = 1
-position = Vector2(710, 344)
+position = Vector2(539, 344)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
 playing = true
-fps = 30
+looping = true
+fps = 60
+frame_skip = 4
 animation_index = 1
 model_style = 1
+
+[node name="SkelFormPlayer" type="Node2D" parent="." unique_id=1972590307]
+physics_interpolation_mode = 1
+position = Vector2(921, 463)
+script = ExtResource("1_t6lng")
+file = "res://PicklesVibe.skf"
+playing = true
+looping = true
+fps = 30
+model_scale = Vector2(0.25, 0.25)
+model_position = Vector2(0, -125)
+metadata/_custom_type_script = "uid://bttdudx216p8f"

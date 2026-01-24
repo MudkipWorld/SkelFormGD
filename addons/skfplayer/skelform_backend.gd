@@ -91,10 +91,18 @@ class Keyframe:
 		element = e
 		value = v
 
+class CachedBoneState:
+	var pos: Vector2
+	var rot: float
+	var scale: Vector2
+	var tex: String
+	var ik_constraint: int
+
 class AnimationData:
 	var name: String
 	var keyframes: Array
 	var fps: int
+	var cached_frames: Array = []
 
 	func _init(_name="", _fps=24):
 		name = _name
@@ -121,6 +129,95 @@ class Armature:
 	var animations: Array
 	var atlases: Array
 	var styles: Array
+
+var thread : Thread 
+
+func bake_animations(armature: Armature):
+	if thread == null: return
+	thread.start(bake_thread.call.bind(armature))
+
+func bake_thread(armature: Armature):
+	if OS.has_feature("editor"):
+		print("Baking animations...")
+	for anim in armature.animations:
+		anim.cached_frames = []
+		if anim.keyframes.is_empty():
+			continue
+		var last_frame = anim.keyframes[-1].frame
+		var bone_count = armature.bones.size()
+		for f in range(last_frame + 1):
+			var frame_data = {}
+			for bone_idx in range(bone_count):
+				var bone = armature.bones[bone_idx]
+				var px = get_interpolated_val(bone.id, bone.init_pos.x, 0, f, anim.keyframes)
+				var py = get_interpolated_val(bone.id, bone.init_pos.y, 1, f, anim.keyframes)
+				var pr = get_interpolated_val(bone.id, bone.init_rot, 2, f, anim.keyframes)
+				var psx = get_interpolated_val(bone.id, bone.init_scale.x, 3, f, anim.keyframes)
+				var psy = get_interpolated_val(bone.id, bone.init_scale.y, 4, f, anim.keyframes)
+				var p_tex = get_prev_keyframe_value(anim.keyframes, bone.id, 5, f, bone.tex)
+				var p_ik = int(get_prev_keyframe_value(anim.keyframes, bone.id, 6, f, bone.ik_constraint))
+				var state = CachedBoneState.new()
+				state.pos = Vector2(px, py)
+				state.rot = pr
+				state.scale = Vector2(psx, psy)
+				state.tex = p_tex
+				state.ik_constraint = p_ik
+				frame_data[bone.id] = state
+			anim.cached_frames.append(frame_data)
+	
+	if OS.has_feature("editor"):
+		print("Animations baked.")
+
+func get_interpolated_val(bone_id: int, init_val: float, element: int, frame: int, keyframes: Array) -> float:
+	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
+	var next_kf = get_next_keyframe(bone_id, element, frame, keyframes)
+	if prev_kf == null:
+		prev_kf = next_kf
+	elif next_kf == null:
+		next_kf = prev_kf
+	if prev_kf == null and next_kf == null:
+		return init_val 
+	var total_frames = next_kf.frame - prev_kf.frame
+	var current_frame = frame - prev_kf.frame
+	if total_frames == 0:
+		return next_kf.value
+	
+	var t = float(current_frame) / float(total_frames)
+	return lerp(prev_kf.value, next_kf.value, t)
+
+func animate_cached(bones: Array, anims: Array, frames: Array, smooth_frames: Array) -> void:
+	for i in range(anims.size()):
+		var anim = anims[i]
+		var frame_float = frames[i] 
+		var smooth = smooth_frames[i] if i < smooth_frames.size() else 0
+		var max_frame = anim.cached_frames.size() - 1
+		if max_frame < 0: continue
+		
+		var current_frame = fmod(frame_float, float(max_frame + 1))
+		var frame_idx = int(current_frame)
+		var cache_data: Dictionary = anim.cached_frames[frame_idx]
+		
+		for bone in bones:
+			if cache_data.has(bone.id):
+				var state: CachedBoneState = cache_data[bone.id]
+				if smooth > 0:
+					bone.pos.x = interpolate_value(bone.pos.x, state.pos.x, 0, smooth)
+					bone.pos.y = interpolate_value(bone.pos.y, state.pos.y, 0, smooth)
+					bone.rot = interpolate_value(bone.rot, state.rot, 0, smooth)
+					bone.scale.x = interpolate_value(bone.scale.x, state.scale.x, 0, smooth)
+					bone.scale.y = interpolate_value(bone.scale.y, state.scale.y, 0, smooth)
+				else:
+					bone.pos = state.pos
+					bone.rot = state.rot
+					bone.scale = state.scale
+				
+				bone.tex = state.tex
+				bone.ik_constraint = state.ik_constraint
+			else:
+				if smooth > 0:
+					reset_bone(bone, 0, smooth, [])
+				else:
+					bone.reset_pose()
 
 func animate(bones: Array, anims: Array, frames: Array, smooth_frames: Array) -> void:
 	for i in range(anims.size()):
@@ -153,6 +250,7 @@ func is_animated(property_name: String, bone_id: int, anims: Array) -> bool:
 				return true
 	return false
 
+
 func property_matches_element(prop: String, element: int) -> bool:
 	match prop:
 		"PositionX": return element == 0
@@ -166,8 +264,14 @@ func property_matches_element(prop: String, element: int) -> bool:
 func interpolate_value(current: float, target: float, frame: int, smooth_frame: int) -> float:
 	if smooth_frame <= 0:
 		return target
-	var t = float(frame) / float(smooth_frame)
-	return lerp(current, target, t)
+	return lerp(current, target, 0.5) 
+
+func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: int, frame: int, default_val) -> Variant:
+	var prev = null
+	for kf in keyframes:
+		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
+			prev = kf
+	return prev.value if prev != null else default_val
 
 func interpolate_bone(bone: Bone, keyframes: Array, bone_id: int, frame: int, smooth_frame: int) -> void:
 	bone.pos.x = interpolate_keyframes(bone_id, bone.pos.x, keyframes, 0, frame, smooth_frame)
@@ -178,12 +282,19 @@ func interpolate_bone(bone: Bone, keyframes: Array, bone_id: int, frame: int, sm
 	bone.tex = get_prev_keyframe_value(keyframes, bone_id, 5, frame, bone.tex)
 	bone.ik_constraint = get_prev_keyframe_value(keyframes, bone_id, 6, frame, bone.ik_constraint)
 
-func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: int, frame: int, default_val) -> Variant:
-	var prev = null
-	for kf in keyframes:
-		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
-			prev = kf
-	return prev.value if prev != null else default_val
+func interpolate_keyframes(bone_id: int, field: float, keyframes: Array, element: int, frame: int, smooth_frame: int) -> float:
+	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
+	var next_kf = get_next_keyframe(bone_id, element, frame, keyframes)
+	if prev_kf == null:
+		prev_kf = next_kf
+	elif next_kf == null:
+		next_kf = prev_kf
+	if prev_kf == null and next_kf == null:
+		return field
+	var total_frames = next_kf.frame - prev_kf.frame
+	var current_frame = frame - prev_kf.frame
+	var target_value = interpolate(current_frame, total_frames, prev_kf.value, next_kf.value)
+	return interpolate(current_frame, smooth_frame, prev_kf.value, target_value)
 
 func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 	if options == null:
@@ -202,7 +313,6 @@ func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 	construct_verts(final_bones)
 	
 	for b in final_bones:
-		# flip Y, since Godot uses -y as positive but SkelForm uses +y
 		b.pos.y = -b.pos.y
 		b.rot = -b.rot
 
@@ -213,26 +323,10 @@ func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 		check_bone_flip(b, options.scale)
 		
 		for v in b.vertices:
-			# ditto above for vertices
 			v.pos.y = -v.pos.y
-
 			v.pos *= options.scale
 
 	return final_bones
-
-func interpolate_keyframes(bone_id: int, field: float, keyframes: Array, element: int, frame: int, smooth_frame: int) -> float:
-	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
-	var next_kf = get_next_keyframe(bone_id, element, frame, keyframes)
-	if prev_kf == null:
-		prev_kf = next_kf
-	elif next_kf == null:
-		next_kf = prev_kf
-	if prev_kf == null and next_kf == null:
-		return field
-	var total_frames = next_kf.frame - prev_kf.frame
-	var current_frame = frame - prev_kf.frame
-	var target_value = interpolate(current_frame, total_frames, prev_kf.value, next_kf.value)
-	return interpolate(current_frame, smooth_frame, prev_kf.value, target_value)
 
 func get_prev_keyframe(bone_id: int, element: int, frame: int, keyframes: Array) -> Keyframe:
 	var prev: Keyframe = null
@@ -292,7 +386,6 @@ func inheritance(bones: Array, ik_rots: Dictionary) -> Array:
 		if bone.parent_id == -1:
 			continue
 		var parent : Bone = bones[bone.parent_id]
-		
 		bone.rot += parent.rot
 		bone.scale *= parent.scale
 		bone.pos *= parent.scale
@@ -325,7 +418,6 @@ func inverse_kinematics(bones: Array, ik_root_ids: Array) -> Dictionary:
 		
 		match root_bone.ik_mode:
 			0:
-				# run FABRIK multiple times, for accuracy
 				for i in range(10):
 					fabrik(chain, root_bone.pos, target_bone.pos)
 			1:
@@ -459,6 +551,7 @@ static func load_armature_from_file(path: String, img_at : Image = null) -> Dict
 	zip.close()
 	var img : Image = Image.new()
 	img.load_png_from_buffer(atlas)
+	img.fix_alpha_edges()
 
 	var data = JSON.parse_string(json_text)
 	if typeof(data) != TYPE_DICTIONARY:

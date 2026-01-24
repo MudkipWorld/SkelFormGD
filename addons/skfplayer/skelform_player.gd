@@ -1,4 +1,5 @@
 @tool
+@icon("res://addons/skfplayer/Resources/node_icon.png")
 extends Node2D
 class_name SkelFormPlayer
 
@@ -59,13 +60,21 @@ var frame_skip_count : int = 0
 		debug = is_debug
 		queue_redraw()
 
+@export var baked_model : bool 
+
+var bone_texture_results : Dictionary = {}
+var loaded : bool = false
+
+
 func _ready():
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	if file.is_empty():
 		return
+	if baked_model:
+		backend.thread = Thread.new()
 	
-	load_model_from_file(file)
-	
+	if !loaded:
+		load_model_from_file(file)
 	if !OS.has_feature("editor"):
 		if auto_play: 
 			playing = true
@@ -92,11 +101,13 @@ func load_model_from_file(filename : String = ""):
 			anim_length = 0
 	else:
 		anim_length = 0
-	
 	bone_texture_results.clear()
 	bone_texture_results = setup_bone_textures(solved_bones, armature.styles)
+	if baked_model:
+		backend.bake_animations(armature)
 	set_physics_process(playing)
 	init_animate()
+	loaded = true
 
 func _physics_process(delta: float) -> void:
 	animate(delta)
@@ -111,7 +122,10 @@ func init_animate():
 	if anim_length == 0: return
 	current_frame = 0
 	var opts = SkelformBackend.ConstructOptions.new(model_position, model_scale, true)
-	backend.animate(armature.bones, [anim], [current_frame], [1])
+	if baked_model:
+		backend.animate_cached(armature.bones, [anim], [current_frame], [1])
+	else:
+		backend.animate(armature.bones, [anim], [current_frame], [1])
 	solved_bones = backend.construct(armature, opts)
 	queue_redraw()
 	prev_frame = current_frame
@@ -137,7 +151,10 @@ func animate(delta : float = 0.1):
 	if frame_skip_count < frame_skip: return
 
 	var opts = SkelformBackend.ConstructOptions.new(model_position, model_scale, true)
-	backend.animate(armature.bones, [anim], [current_frame], [1])
+	if baked_model:
+		backend.animate_cached(armature.bones, [anim], [current_frame], [1])
+	else:
+		backend.animate(armature.bones, [anim], [current_frame], [1])
 	solved_bones = backend.construct(armature, opts)
 	queue_redraw()
 	prev_frame = current_frame
