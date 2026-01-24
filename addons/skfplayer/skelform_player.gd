@@ -17,14 +17,7 @@ var frame_skip_count : int = 0
 @export var frame_skip: int = 2
 @export var animation_index : int = 0
 @export var model_scale : Vector2 = Vector2(0.1, 0.1)
-@export var model_style: int = 0:
-	set(new_style):
-		if armature == null:
-			return
-		if new_style < 0 or new_style >= armature.styles.size():
-			return
-		model_style = new_style
-		bone_texture_results = setup_bone_textures(solved_bones, armature.styles)
+@export var model_style: int = 0
 @export var debug : bool = false
 
 var bone_texture_results : Dictionary = {}
