@@ -380,32 +380,25 @@ func point_bones(chain: Array) -> void:
 		last_bone.rot = atan2(dir.y, dir.x)
 
 func fabrik(chain: Array, root: Vector2, target: Vector2) -> void:
-	var count := chain.size()
-	if count < 1:
-		return
-	var lengths := []
-	lengths.resize(count - 1)
-	for i in range(count - 1):
-		lengths[i] = (chain[i + 1].pos - chain[i].pos).length()
-
 	var next_pos = target
 	var next_length = 0.0
-	for i in range(count - 1, -1, -1):
+	for i in range(chain.size() - 1, -1, -1):
 		var dir = (next_pos - chain[i].pos).normalized() * next_length
 		if dir.x != dir.x or dir.y != dir.y: 
 			dir = Vector2.ZERO
 		if i != 0:
-			next_length = lengths[i - 1]
+			next_length = magnitude(chain[i].pos - chain[i - 1].pos)
 		chain[i].pos = next_pos - dir
 		next_pos = chain[i].pos
+
 	var prev_pos = root
 	var prev_length = 0.0
-	for i in range(count):
+	for i in range(chain.size()):
 		var dir = (prev_pos - chain[i].pos).normalized() * prev_length
 		if dir.x != dir.x or dir.y != dir.y: 
 			dir = Vector2.ZERO
-		if i != count - 1:
-			prev_length = lengths[i]
+		if i != chain.size() - 1:
+			prev_length = magnitude(chain[i].pos - chain[i + 1].pos)
 		chain[i].pos = prev_pos - dir
 		prev_pos = chain[i].pos
 
