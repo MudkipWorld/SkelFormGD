@@ -4,12 +4,10 @@ class_name SkelformBackend
 class ConstructOptions:
 	var position: Vector2
 	var scale: Vector2
-	var flip_y: bool
 
 	func _init(pos: Vector2 = Vector2.ZERO, s: Vector2 = Vector2.ONE, flip: bool = true):
 		position = pos
 		scale = s
-		flip_y = flip
 
 class Vertex:
 	var pos: Vector2
@@ -208,24 +206,20 @@ func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 	final_bones = inheritance(final_bones, ik_results)
 	construct_verts(final_bones)
 	
-	if options.flip_y:
-		for b in final_bones:
-			b.pos *= options.scale
-			b.scale *= options.scale
-			for v in b.vertices:
-				v.pos *= options.scale
-				v.initPos *= options.scale
-		_apply_flip_y(final_bones)
-
-	return final_bones
-
-func _apply_flip_y(bones: Array) -> void:
-	for b in bones:
+	for b in final_bones:
+		# flip Y, since Godot uses -y as positive but SkelForm uses +y
 		b.pos.y = -b.pos.y
 		b.rot = -b.rot
+
+		b.pos *= options.scale
+		b.scale *= options.scale
 		for v in b.vertices:
+			# ditto above for vertices
 			v.pos.y = -v.pos.y
-			v.initPos.y = -v.initPos.y
+
+			v.pos *= options.scale
+
+	return final_bones
 
 func interpolate_keyframes(bone_id: int, field: float, keyframes: Array, element: int, frame: int, smooth_frame: int) -> float:
 	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
