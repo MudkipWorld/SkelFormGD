@@ -338,43 +338,28 @@ func inverse_kinematics(bones: Array, ik_root_ids: Array, bone_map : Dictionary)
 		if target_bone == null:
 			continue
 		
-		var root_world_pos: Vector2 = chain[0].pos
-		for b in chain:
-			b.pos -= root_world_pos
-		var target_local = target_bone.pos - root_world_pos
-		
 		match root_bone.ik_mode:
 			0:
 				# run FABRIK multiple times, for accuracy
 				for i in range(10):
-					fabrik(chain, root_bone.pos, target_local)
+					fabrik(chain, root_bone.pos, target_bone.pos)
 			1:
-				arc_ik(chain, root_bone.pos, target_local)
+				arc_ik(chain, root_bone.pos, target_bone.pos)
 		point_bones(chain)
-		apply_constraints(chain, root_bone, root_world_pos, target_bone.pos)
+		apply_constraints(chain, root_bone, root_bone.pos, target_bone.pos)
 		for b in range(chain.size()):
 			if b == chain.size()- 1:
 				continue
 			ik_rots[chain[b].id] = chain[b].rot
 	return ik_rots
 
-func apply_constraints(chain: Array, family: Bone, root_world: Vector2, target_world: Vector2) -> void:
+func apply_constraints(chain: Array, family: Bone, root: Vector2, target: Vector2) -> void:
 	if chain.size() < 2:
 		return
 	if family.ik_constraint == 0:
 		return
-	var root : Vector2 = Vector2.ZERO
-	var target : Vector2 = target_world - root_world
-	var joint_id = int(family.ik_bone_ids[1])
-	var joint_bone: Bone = null
-	for b in chain:
-		if b.id == joint_id:
-			joint_bone = b
-			break
-	if joint_bone == null:
-		return
 
-	var joint_dir : Vector2 = (joint_bone.pos - root).normalized()
+	var joint_dir : Vector2 = (chain[1].pos - root).normalized()
 	var base_dir : Vector2 = (target - root).normalized()
 	var dir : float = joint_dir.x * base_dir.y - base_dir.x * joint_dir.y
 	var base_angle := atan2(base_dir.y, base_dir.x)
