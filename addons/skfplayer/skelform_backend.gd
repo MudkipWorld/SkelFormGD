@@ -359,17 +359,10 @@ func apply_constraints(chain: Array, family: Bone, root: Vector2, target: Vector
 	var base_angle := atan2(base_dir.y, base_dir.x)
 	var cw : bool = family.ik_constraint == 1 and dir > 0.0
 	var ccw : bool = family.ik_constraint == 2 and dir < 0.0
-	if not (cw or ccw):
-		return
-	var bone_map := {}
-	for b in chain:
-		bone_map[b.id] = b
 
-	for id in family.ik_bone_ids:
-		var bone: Bone = bone_map.get(int(id))
-		if bone == null:
-			continue
-		bone.rot = -bone.rot + base_angle * 2.0
+	if cw or ccw:
+		for bone in chain:
+			bone.rot = -bone.rot + base_angle * 2.0
 
 func point_bones(chain: Array) -> void:
 	if chain.is_empty():
