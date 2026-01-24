@@ -345,7 +345,9 @@ func inverse_kinematics(bones: Array, ik_root_ids: Array, bone_map : Dictionary)
 		
 		match root_bone.ik_mode:
 			0:
-				fabrik(chain, root_bone.pos, target_local)
+				# run FABRIK multiple times, for accuracy
+				for i in range(10):
+					fabrik(chain, root_bone.pos, target_local)
 			1:
 				arc_ik(chain, root_bone.pos, target_local)
 		point_bones(chain)
