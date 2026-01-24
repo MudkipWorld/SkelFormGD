@@ -2,22 +2,132 @@
 
 [ext_resource type="Script" uid="uid://bttdudx216p8f" path="res://addons/skfplayer/skelform_player.gd" id="1_t6lng"]
 
-[node name="Scene" type="Node2D" unique_id=913070359]
+[node name="Scene" type="Control" unique_id=673839568]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="Skellina" type="Node2D" parent="." unique_id=1227293270]
+[node name="Processed" type="Label" parent="." unique_id=1637415227]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 35.0
+grow_horizontal = 2
+text = "Processed At Runtime"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Baked" type="Label" parent="." unique_id=726068681]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -18.0
+offset_bottom = 15.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Cached/ Baked"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Skellinas" type="Control" parent="." unique_id=167301956]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+
+[node name="Skellina" type="Node2D" parent="Skellinas" unique_id=1227293270]
 physics_interpolation_mode = 1
-position = Vector2(173, 393)
+position = Vector2(96, 198)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
 auto_play = true
 playing = true
 looping = true
-fps = 30
-animation_index = 2
+fps = 60
+frame_skip = 3
+model_scale = Vector2(0.08, 0.08)
 
-[node name="Skellington" type="Node2D" parent="." unique_id=680816443]
+[node name="Skellina2" type="Node2D" parent="Skellinas" unique_id=460568199]
 physics_interpolation_mode = 1
-position = Vector2(539, 344)
+position = Vector2(293, 195)
+script = ExtResource("1_t6lng")
+file = "res://_skellina.skf"
+auto_play = true
+playing = true
+looping = true
+fps = 60
+frame_skip = 3
+animation_index = 1
+model_scale = Vector2(0.08, 0.08)
+
+[node name="Skellina3" type="Node2D" parent="Skellinas" unique_id=547138676]
+physics_interpolation_mode = 1
+position = Vector2(484, 198)
+script = ExtResource("1_t6lng")
+file = "res://_skellina.skf"
+auto_play = true
+playing = true
+looping = true
+fps = 60
+frame_skip = 3
+animation_index = 2
+model_scale = Vector2(0.08, 0.08)
+
+[node name="Skellina4" type="Node2D" parent="Skellinas" unique_id=1002689137]
+physics_interpolation_mode = 1
+position = Vector2(681, 195)
+script = ExtResource("1_t6lng")
+file = "res://_skellina.skf"
+auto_play = true
+playing = true
+looping = true
+fps = 60
+frame_skip = 3
+model_scale = Vector2(0.08, 0.08)
+
+[node name="Skellina5" type="Node2D" parent="Skellinas" unique_id=339043425]
+physics_interpolation_mode = 1
+position = Vector2(844, 198)
+script = ExtResource("1_t6lng")
+file = "res://_skellina.skf"
+auto_play = true
+playing = true
+looping = true
+fps = 60
+frame_skip = 3
+animation_index = 1
+model_scale = Vector2(0.08, 0.08)
+
+[node name="Skellina6" type="Node2D" parent="Skellinas" unique_id=459308605]
+physics_interpolation_mode = 1
+position = Vector2(1041, 195)
+script = ExtResource("1_t6lng")
+file = "res://_skellina.skf"
+auto_play = true
+playing = true
+looping = true
+fps = 60
+frame_skip = 3
+animation_index = 2
+model_scale = Vector2(0.08, 0.08)
+
+[node name="Skellingtons" type="Control" parent="." unique_id=227986465]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Skellington" type="Node2D" parent="Skellingtons" unique_id=680816443]
+physics_interpolation_mode = 1
+position = Vector2(102, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
 playing = true
@@ -25,16 +135,84 @@ looping = true
 fps = 60
 frame_skip = 4
 animation_index = 1
+model_scale = Vector2(0.08, 0.08)
 model_style = 1
+baked_model = true
 
-[node name="SkelFormPlayer" type="Node2D" parent="." unique_id=1972590307]
+[node name="Skellington2" type="Node2D" parent="Skellingtons" unique_id=1618866112]
 physics_interpolation_mode = 1
-position = Vector2(921, 463)
+position = Vector2(299, 172)
 script = ExtResource("1_t6lng")
-file = "res://PicklesVibe.skf"
+file = "res://_skellington.skf"
 playing = true
 looping = true
-fps = 30
-model_scale = Vector2(0.25, 0.25)
-model_position = Vector2(0, -125)
-metadata/_custom_type_script = "uid://bttdudx216p8f"
+fps = 60
+frame_skip = 4
+model_scale = Vector2(0.08, 0.08)
+model_style = 1
+baked_model = true
+
+[node name="Skellington3" type="Node2D" parent="Skellingtons" unique_id=1385546126]
+physics_interpolation_mode = 1
+position = Vector2(490, 172)
+script = ExtResource("1_t6lng")
+file = "res://_skellington.skf"
+playing = true
+looping = true
+fps = 60
+frame_skip = 4
+animation_index = 1
+model_scale = Vector2(0.08, 0.08)
+model_style = 1
+baked_model = true
+
+[node name="Skellington4" type="Node2D" parent="Skellingtons" unique_id=786793741]
+physics_interpolation_mode = 1
+position = Vector2(687, 172)
+script = ExtResource("1_t6lng")
+file = "res://_skellington.skf"
+playing = true
+looping = true
+fps = 60
+frame_skip = 4
+model_scale = Vector2(0.08, 0.08)
+model_style = 1
+baked_model = true
+
+[node name="Skellington5" type="Node2D" parent="Skellingtons" unique_id=1964563637]
+physics_interpolation_mode = 1
+position = Vector2(850, 172)
+script = ExtResource("1_t6lng")
+file = "res://_skellington.skf"
+playing = true
+looping = true
+fps = 60
+frame_skip = 4
+animation_index = 1
+model_scale = Vector2(0.08, 0.08)
+model_style = 1
+baked_model = true
+
+[node name="Skellington6" type="Node2D" parent="Skellingtons" unique_id=164820353]
+physics_interpolation_mode = 1
+position = Vector2(1047, 172)
+script = ExtResource("1_t6lng")
+file = "res://_skellington.skf"
+playing = true
+looping = true
+fps = 60
+frame_skip = 4
+model_scale = Vector2(0.08, 0.08)
+model_style = 1
+baked_model = true
+
+[node name="HSeparator" type="HSeparator" parent="." unique_id=658453589]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -23.0
+offset_bottom = -19.0
+grow_horizontal = 2
+grow_vertical = 2

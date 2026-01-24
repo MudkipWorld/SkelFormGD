@@ -21,6 +21,10 @@ run/max_fps=60
 run/low_processor_mode=true
 config/icon="uid://cf2oacln8jpuo"
 
+[display]
+
+window/stretch/mode="canvas_items"
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/skfplayer/plugin.cfg")

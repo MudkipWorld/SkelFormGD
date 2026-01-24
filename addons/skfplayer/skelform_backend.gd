@@ -103,6 +103,7 @@ class AnimationData:
 	var keyframes: Array
 	var fps: int
 	var cached_frames: Array = []
+	var cached_solved_frames: Array = []
 
 	func _init(_name="", _fps=24):
 		name = _name
@@ -130,15 +131,33 @@ class Armature:
 	var atlases: Array
 	var styles: Array
 
+class CachedSolvedBone:
+	var pos: Vector2
+	var rot: float
+	var scale: Vector2
+	var tex: String
+	var ik_constraint: int
+
+class CachedSolvedFrame:
+	var bones: Array 
+
+class ModelData:
+	var armature : Armature
+	var image : Image
+
 var thread : Thread 
+
+static var existing_files : Dictionary[String, ModelData] = {}
+
 
 func bake_animations(armature: Armature):
 	if thread == null: return
 	thread.start(bake_thread.call.bind(armature))
+	thread.wait_to_finish()
+	thread.start(bake_solved_poses.call.bind(armature))
 
 func bake_thread(armature: Armature):
-	if OS.has_feature("editor"):
-		print("Baking animations...")
+	#print("Baking animations...")
 	for anim in armature.animations:
 		anim.cached_frames = []
 		if anim.keyframes.is_empty():
@@ -165,8 +184,52 @@ func bake_thread(armature: Armature):
 				frame_data[bone.id] = state
 			anim.cached_frames.append(frame_data)
 	
-	if OS.has_feature("editor"):
-		print("Animations baked.")
+	#print("Animations baked.")
+
+func bake_solved_poses(armature: Armature) -> void:
+	for anim in armature.animations:
+		anim.cached_solved_frames = []
+		if anim.cached_frames.is_empty():
+			continue
+		for f in range(anim.cached_frames.size()):
+			var rest_bones: Array = []
+			for b in armature.bones:
+				var c = b.copy()
+				rest_bones.append(c)
+			var local_frame: Dictionary = anim.cached_frames[f]
+			for bone in rest_bones:
+				var s: CachedBoneState = local_frame.get(bone.id)
+				if s:
+					bone.pos = s.pos
+					bone.rot = s.rot
+					bone.scale = s.scale
+					bone.tex = s.tex
+					bone.ik_constraint = s.ik_constraint
+				else:
+					bone.reset_pose()
+			rest_bones = inheritance(rest_bones, {})
+			var ik_rots = inverse_kinematics(rest_bones, armature.ik_root_ids)
+			var final_bones: Array = []
+			for b in armature.bones:
+				var c = b.copy()
+				final_bones.append(c)
+			for bone in final_bones:
+				var s: CachedBoneState = local_frame.get(bone.id)
+				if s:
+					bone.pos = s.pos
+					bone.rot = s.rot
+					bone.scale = s.scale
+					bone.tex = s.tex
+					bone.ik_constraint = s.ik_constraint
+				else:
+					bone.reset_pose()
+			final_bones = inheritance(final_bones, ik_rots)
+			construct_verts(final_bones)
+			var solved : CachedSolvedFrame = CachedSolvedFrame.new()
+			solved.bones = []
+			for b in final_bones:
+				solved.bones.append(b.copy())
+			anim.cached_solved_frames.append(solved)
 
 func get_interpolated_val(bone_id: int, init_val: float, element: int, frame: int, keyframes: Array) -> float:
 	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
@@ -250,7 +313,6 @@ func is_animated(property_name: String, bone_id: int, anims: Array) -> bool:
 				return true
 	return false
 
-
 func property_matches_element(prop: String, element: int) -> bool:
 	match prop:
 		"PositionX": return element == 0
@@ -322,6 +384,31 @@ func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 
 		check_bone_flip(b, options.scale)
 		
+		for v in b.vertices:
+			v.pos.y = -v.pos.y
+			v.pos *= options.scale
+
+	return final_bones
+
+func construct_baked(anim: AnimationData, frame: float, options: ConstructOptions) -> Array:
+	if anim.cached_solved_frames.is_empty():
+		return []
+
+	var idx := int(frame) % anim.cached_solved_frames.size()
+	var baked: CachedSolvedFrame = anim.cached_solved_frames[idx]
+
+	var final_bones := []
+	for b in baked.bones:
+		final_bones.append(b.copy())
+
+	for b in final_bones:
+		b.pos.y = -b.pos.y
+		b.rot = -b.rot
+		b.scale *= options.scale
+		b.pos *= options.scale
+		b.pos += options.position
+		check_bone_flip(b, options.scale)
+
 		for v in b.vertices:
 			v.pos.y = -v.pos.y
 			v.pos *= options.scale
@@ -534,30 +621,44 @@ func inherit_vert(pos, bone):
 	pos += bone.pos
 	return pos
 
-static func load_armature_from_file(path: String, img_at : Image = null) -> Dictionary:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	file.close()
-	var zip := ZIPReader.new()
-	var err := zip.open(path)
-	if err != OK:
-		return {}
-	if !zip.file_exists("armature.json"):
+func load_armature_from_file(path: String, bake: bool = false) -> Dictionary:
+	var raw_model: ModelData
+	var is_new_file: bool = false
+	if existing_files.has(path):
+		raw_model = existing_files[path]
+		#print("Existing File Detected.")
+	else:
+		var file := FileAccess.open(path, FileAccess.READ)
+		if file == null:
+			return {}
+		file.close()
+		var zip := ZIPReader.new()
+		var err := zip.open(path)
+		if err != OK:
+			return {}
+		if !zip.file_exists("armature.json"):
+			zip.close()
+			return {}
+		var json_text = zip.read_file("armature.json").get_string_from_utf8()
+		var atlas = zip.read_file("atlas0.png")
 		zip.close()
-		return {}
-	var json_text = zip.read_file("armature.json").get_string_from_utf8()
-	var atlas = zip.read_file("atlas0.png")
-	zip.close()
-	var img : Image = Image.new()
-	img.load_png_from_buffer(atlas)
-	img.fix_alpha_edges()
-
-	var data = JSON.parse_string(json_text)
-	if typeof(data) != TYPE_DICTIONARY:
-		return {}
-
-	return {arm = build_armature_from_dict(data), img_at = img}
+		var img : Image = Image.new()
+		img.load_png_from_buffer(atlas)
+		img.fix_alpha_edges()
+		var data = JSON.parse_string(json_text)
+		if typeof(data) != TYPE_DICTIONARY:
+			return {}
+		raw_model = ModelData.new()
+		raw_model.armature = build_armature_from_dict(data)
+		raw_model.image = img
+		if thread == null:
+			thread = Thread.new()
+		if bake:
+			bake_animations(raw_model.armature)
+		existing_files[path] = raw_model
+		#print("New File Detected.") 
+		
+	return {arm = raw_model.armature, img_at = raw_model.image}
 
 static func build_armature_from_dict(data: Dictionary) -> Armature:
 	var arm := Armature.new()

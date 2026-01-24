@@ -60,21 +60,27 @@ var frame_skip_count : int = 0
 		debug = is_debug
 		queue_redraw()
 
-@export var baked_model : bool 
+@export var baked_model : bool :
+	set(baked):
+		if baked:
+			if armature:
+				backend.bake_animations(armature)
+		else:
+			if armature:
+				for i in armature.animations:
+					i.cached_frames.clear()
+					i.cached_solved_frames.clear()
+		baked_model = baked
 
 var bone_texture_results : Dictionary = {}
-var loaded : bool = false
-
 
 func _ready():
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	if file.is_empty():
 		return
-	if baked_model:
-		backend.thread = Thread.new()
+
+	load_model_from_file(file)
 	
-	if !loaded:
-		load_model_from_file(file)
 	if !OS.has_feature("editor"):
 		if auto_play: 
 			playing = true
@@ -86,12 +92,12 @@ func load_model_from_file(filename : String = ""):
 	if !FileAccess.file_exists(filename):
 		printerr("File doesn't exist..")
 		return
-	var dict = SkelformBackend.load_armature_from_file(filename)
+	var dict = backend.load_armature_from_file(filename, baked_model)
 	armature = dict.arm
 	img_atlas = dict.img_at
 	if img_atlas:
 		text_atlases.append(ImageTexture.create_from_image(img_atlas))
-	if not armature:
+	if !armature:
 		return
 	if armature.animations.size() > animation_index:
 		var anim = armature.animations[animation_index]
@@ -103,11 +109,8 @@ func load_model_from_file(filename : String = ""):
 		anim_length = 0
 	bone_texture_results.clear()
 	bone_texture_results = setup_bone_textures(solved_bones, armature.styles)
-	if baked_model:
-		backend.bake_animations(armature)
 	set_physics_process(playing)
 	init_animate()
-	loaded = true
 
 func _physics_process(delta: float) -> void:
 	animate(delta)
@@ -124,9 +127,10 @@ func init_animate():
 	var opts = SkelformBackend.ConstructOptions.new(model_position, model_scale, true)
 	if baked_model:
 		backend.animate_cached(armature.bones, [anim], [current_frame], [1])
+		solved_bones = backend.construct_baked(anim, current_frame, opts)
 	else:
 		backend.animate(armature.bones, [anim], [current_frame], [1])
-	solved_bones = backend.construct(armature, opts)
+		solved_bones = backend.construct(armature, opts)
 	queue_redraw()
 	prev_frame = current_frame
 	frame_skip_count = 0
@@ -153,9 +157,10 @@ func animate(delta : float = 0.1):
 	var opts = SkelformBackend.ConstructOptions.new(model_position, model_scale, true)
 	if baked_model:
 		backend.animate_cached(armature.bones, [anim], [current_frame], [1])
+		solved_bones = backend.construct_baked(anim, current_frame, opts)
 	else:
 		backend.animate(armature.bones, [anim], [current_frame], [1])
-	solved_bones = backend.construct(armature, opts)
+		solved_bones = backend.construct(armature, opts)
 	queue_redraw()
 	prev_frame = current_frame
 	frame_skip_count = 0
