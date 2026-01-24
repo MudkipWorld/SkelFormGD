@@ -38,7 +38,6 @@ class Bone:
 	var init_scale: Vector2
 	var init_pos: Vector2
 	var zindex: int = 0
-	var rest_length: float = 0.0
 	
 	var binds: Array = []
 	var vertices: Array[Vertex] = []
@@ -72,7 +71,6 @@ class Bone:
 		b.init_scale = init_scale
 		b.init_pos = init_pos
 		b.zindex = zindex
-		b.rest_length = rest_length
 		b.binds = binds.duplicate(true)
 		b.indices = indices.duplicate()
 		b.vertices = []
@@ -289,15 +287,11 @@ func construct_verts(bones: Array) -> void:
 					vert.pos = vert.pos.lerp(world_pos, weight)
 
 func inheritance(bones: Array, ik_rots: Dictionary) -> Array:
-	var bone_map: Dictionary = {}
-	for b in bones:
-		bone_map[b.id] = b
-	
 	for i in range(bones.size()):
 		var bone : Bone = bones[i]
-		if bone.parent_id == -1 or not bone_map.has(bone.parent_id):
+		if bone.parent_id == -1:
 			continue
-		var parent : Bone = bone_map[bone.parent_id]
+		var parent : Bone = bones[bone.parent_id]
 		
 		bone.rot += parent.rot
 		bone.scale *= parent.scale
