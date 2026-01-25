@@ -115,6 +115,7 @@ fps = 60
 frame_skip = 3
 animation_index = 2
 model_scale = Vector2(0.08, 0.08)
+debug = true
 
 [node name="Skellingtons" type="Control" parent="." unique_id=227986465]
 layout_mode = 1
@@ -133,9 +134,10 @@ file = "res://_skellington.skf"
 playing = true
 looping = true
 fps = 60
-frame_skip = 4
+frame_skip = 3
 animation_index = 1
 model_scale = Vector2(0.08, 0.08)
+fabrik_iterations = 16
 model_style = 1
 baked_model = true
 
@@ -147,8 +149,9 @@ file = "res://_skellington.skf"
 playing = true
 looping = true
 fps = 60
-frame_skip = 4
+frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
+fabrik_iterations = 14
 model_style = 1
 baked_model = true
 
@@ -160,9 +163,10 @@ file = "res://_skellington.skf"
 playing = true
 looping = true
 fps = 60
-frame_skip = 4
+frame_skip = 3
 animation_index = 1
 model_scale = Vector2(0.08, 0.08)
+fabrik_iterations = 12
 model_style = 1
 baked_model = true
 
@@ -174,7 +178,7 @@ file = "res://_skellington.skf"
 playing = true
 looping = true
 fps = 60
-frame_skip = 4
+frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
 model_style = 1
 baked_model = true
@@ -187,10 +191,12 @@ file = "res://_skellington.skf"
 playing = true
 looping = true
 fps = 60
-frame_skip = 4
+frame_skip = 3
 animation_index = 1
 model_scale = Vector2(0.08, 0.08)
+fabrik_iterations = 8
 model_style = 1
+debug = true
 baked_model = true
 
 [node name="Skellington6" type="Node2D" parent="Skellingtons" unique_id=164820353]
@@ -201,8 +207,9 @@ file = "res://_skellington.skf"
 playing = true
 looping = true
 fps = 60
-frame_skip = 4
+frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
+fabrik_iterations = 6
 model_style = 1
 baked_model = true
 
@@ -216,3 +223,13 @@ offset_top = -23.0
 offset_bottom = -19.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="SkelFormPlayer" type="Node2D" parent="." unique_id=380776153]
+physics_interpolation_mode = 1
+position = Vector2(1412, 163)
+script = ExtResource("1_t6lng")
+file = "res://PicklesVibe.skf"
+playing = true
+looping = true
+debug = true
+metadata/_custom_type_script = "uid://bttdudx216p8f"

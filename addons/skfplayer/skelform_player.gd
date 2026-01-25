@@ -14,6 +14,8 @@ var time_accum : float = 0.0
 var prev_frame : int = 0
 var frame_skip_count : int = 0
 
+var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.new()
+
 @export var file: String : 
 	set(new_file):
 		load_model_from_file(new_file)
@@ -38,12 +40,19 @@ var frame_skip_count : int = 0
 @export var model_scale : Vector2 = Vector2(0.15, 0.15) : 
 	set(new_scale):
 		model_scale = new_scale
+		opts.scale = new_scale
 		init_animate()
  
 @export var model_position : Vector2 = Vector2(0, 0) : 
 	set(new_position):
 		model_position = new_position
+		opts.model_position = new_position
 		init_animate()
+
+@export_range(1, 50) var fabrik_iterations : int = 10 :
+	set(new_it):
+		fabrik_iterations = new_it
+		opts.fabrik_iterations = new_it
 
 @export var model_style: int = 0:
 	set(new_style):
@@ -70,15 +79,21 @@ var frame_skip_count : int = 0
 				for i in armature.animations:
 					i.cached_frames.clear()
 					i.cached_solved_frames.clear()
+		
 		baked_model = baked
 
 var bone_texture_results : Dictionary = {}
+
 
 func _ready():
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	if file.is_empty():
 		return
 
+	opts.scale = model_scale
+	opts.position = model_position
+	opts.fabrik_iterations = fabrik_iterations
+	
 	load_model_from_file(file)
 	
 	if !OS.has_feature("editor"):
@@ -124,7 +139,6 @@ func init_animate():
 	anim_length = anim.keyframes[-1].frame + 1
 	if anim_length == 0: return
 	current_frame = 0
-	var opts = SkelformBackend.ConstructOptions.new(model_position, model_scale, true)
 	if baked_model:
 		backend.animate_cached(armature.bones, [anim], [current_frame], [1])
 		solved_bones = backend.construct_baked(anim, current_frame, opts)
@@ -154,7 +168,6 @@ func animate(delta : float = 0.1):
 	if prev_frame == current_frame: return
 	if frame_skip_count < frame_skip: return
 
-	var opts = SkelformBackend.ConstructOptions.new(model_position, model_scale, true)
 	if baked_model:
 		backend.animate_cached(armature.bones, [anim], [current_frame], [1])
 		solved_bones = backend.construct_baked(anim, current_frame, opts)

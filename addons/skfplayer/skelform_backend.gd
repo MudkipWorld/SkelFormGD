@@ -4,10 +4,12 @@ class_name SkelformBackend
 class ConstructOptions:
 	var position: Vector2
 	var scale: Vector2
+	var fabrik_iterations : int
 
-	func _init(pos: Vector2 = Vector2.ZERO, s: Vector2 = Vector2.ONE, flip: bool = true):
+	func _init(pos: Vector2 = Vector2.ZERO, s: Vector2 = Vector2.ONE, flip: bool = true, fab_i : int = 10):
 		position = pos
 		scale = s
+		fabrik_iterations = fab_i
 
 class Vertex:
 	var pos: Vector2
@@ -149,7 +151,6 @@ var thread : Thread
 
 static var existing_files : Dictionary[String, ModelData] = {}
 
-
 func bake_animations(armature: Armature):
 	if thread == null: return
 	thread.start(bake_thread.call.bind(armature))
@@ -208,7 +209,7 @@ func bake_solved_poses(armature: Armature) -> void:
 				else:
 					bone.reset_pose()
 			rest_bones = inheritance(rest_bones, {})
-			var ik_rots = inverse_kinematics(rest_bones, armature.ik_root_ids)
+			var ik_rots = inverse_kinematics(rest_bones, armature.ik_root_ids, null)
 			var final_bones: Array = []
 			for b in armature.bones:
 				var c = b.copy()
@@ -367,7 +368,7 @@ func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 
 	rest_bones = inheritance(rest_bones, {}) 
 	
-	var ik_results = inverse_kinematics(rest_bones, armature.ik_root_ids)
+	var ik_results = inverse_kinematics(rest_bones, armature.ik_root_ids, options)
 	var final_bones := []
 	for b in armature.bones:
 		final_bones.append(b.copy())
@@ -484,7 +485,7 @@ func inheritance(bones: Array, ik_rots: Dictionary) -> Array:
 				
 	return bones
 
-func inverse_kinematics(bones: Array, ik_root_ids: Array) -> Dictionary:
+func inverse_kinematics(bones: Array, ik_root_ids: Array, option : ConstructOptions) -> Dictionary:
 	var ik_rots : Dictionary = {} 
 	for id in ik_root_ids:
 		var root_bone = bones[id]
@@ -505,8 +506,12 @@ func inverse_kinematics(bones: Array, ik_root_ids: Array) -> Dictionary:
 		
 		match root_bone.ik_mode:
 			0:
-				for i in range(10):
-					fabrik(chain, root_bone.pos, target_bone.pos)
+				if option == null:
+					for i in range(10):
+						fabrik(chain, root_bone.pos, target_bone.pos)
+				else:
+					for i in range(option.fabrik_iterations):
+						fabrik(chain, root_bone.pos, target_bone.pos)
 			1:
 				arc_ik(chain, root_bone.pos, target_bone.pos)
 		point_bones(chain)
