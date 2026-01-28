@@ -145,7 +145,7 @@ class CachedSolvedFrame:
 
 class ModelData:
 	var armature : Armature
-	var image : Image
+	var image : Array
 
 var thread : Thread 
 
@@ -645,25 +645,40 @@ func load_armature_from_file(path: String, bake: bool = false) -> Dictionary:
 			zip.close()
 			return {}
 		var json_text = zip.read_file("armature.json").get_string_from_utf8()
-		var atlas = zip.read_file("atlas0.png")
+		var atlases: Array = []
+
+		var index : int = 0
+		for i in zip.get_files():
+			var _name := "atlas%d.png" %index
+			if !zip.file_exists(_name):
+				continue
+
+			var buf := zip.read_file(_name)
+			var img := Image.new()
+			img.load_png_from_buffer(buf)
+			img.fix_alpha_edges()
+			atlases.append(img)
+			index +=1
+			print(_name)
+			
+
+	
+
 		zip.close()
-		var img : Image = Image.new()
-		img.load_png_from_buffer(atlas)
-		img.fix_alpha_edges()
 		var data = JSON.parse_string(json_text)
 		if typeof(data) != TYPE_DICTIONARY:
 			return {}
 		raw_model = ModelData.new()
 		raw_model.armature = build_armature_from_dict(data)
-		raw_model.image = img
+		raw_model.image = atlases
 		if thread == null:
 			thread = Thread.new()
 		if bake:
 			bake_animations(raw_model.armature)
 		existing_files[path] = raw_model
 		#print("New File Detected.") 
-		
 	return {arm = raw_model.armature, img_at = raw_model.image}
+
 
 static func build_armature_from_dict(data: Dictionary) -> Armature:
 	var arm := Armature.new()

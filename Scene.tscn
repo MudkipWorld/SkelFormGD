@@ -233,3 +233,13 @@ playing = true
 looping = true
 debug = true
 metadata/_custom_type_script = "uid://bttdudx216p8f"
+
+[node name="SkelFormPlayer2" type="Node2D" parent="." unique_id=1530212980]
+physics_interpolation_mode = 1
+position = Vector2(1437, 495)
+script = ExtResource("1_t6lng")
+file = "res://BaseFTAnimated.skf"
+playing = true
+looping = true
+model_scale = Vector2(0.5, 0.5)
+metadata/_custom_type_script = "uid://bttdudx216p8f"

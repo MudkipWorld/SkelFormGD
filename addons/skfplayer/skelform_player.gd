@@ -8,7 +8,7 @@ var armature : SkelformBackend.Armature
 var solved_bones: Array = []
 var current_frame: int = 0
 var anim_length: int = 0
-var img_atlas : Image = null
+var img_atlas  : Array = []
 var text_atlases : Array = []
 var time_accum : float = 0.0
 var prev_frame : int = 0
@@ -110,10 +110,14 @@ func load_model_from_file(filename : String = ""):
 	var dict = backend.load_armature_from_file(filename, baked_model)
 	armature = dict.arm
 	img_atlas = dict.img_at
-	if img_atlas:
-		text_atlases.append(ImageTexture.create_from_image(img_atlas))
+	
+	if !img_atlas.is_empty():
+		for img in img_atlas:
+			text_atlases.append(ImageTexture.create_from_image(img))
+	
 	if !armature:
 		return
+		
 	if armature.animations.size() > animation_index:
 		var anim = armature.animations[animation_index]
 		if anim.keyframes.size() > 0:
@@ -186,7 +190,15 @@ func _draw() -> void:
 func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 	if bones.is_empty():
 		return
-	bones.sort_custom(func(a, b): return a.zindex < b.zindex)
+	
+	var order : Dictionary = {}
+	for i in bones.size():
+		order[bones[i]] = i
+	
+	bones.sort_custom(func(a, b):
+		if a.zindex != b.zindex:
+			return a.zindex < b.zindex
+		return order[a] < order[b])
 
 	var final_textures = setup_bone_textures(solved_bones, armature.styles)
 	
