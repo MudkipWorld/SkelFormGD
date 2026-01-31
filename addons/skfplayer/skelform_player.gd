@@ -35,7 +35,8 @@ var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.n
 		if !looping:
 			current_frame = 0
 		animation_index = index
-		queue_redraw()
+		#queue_redraw()
+@export var disable_ik : bool = false
 
 @export var model_scale : Vector2 = Vector2(0.15, 0.15) : 
 	set(new_scale):
@@ -82,8 +83,9 @@ var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.n
 		
 		baked_model = baked
 
-var bone_texture_results : Dictionary = {}
+@export var smoothing : int = 1
 
+var bone_texture_results : Dictionary = {}
 
 func _ready():
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
@@ -144,10 +146,10 @@ func init_animate():
 	if anim_length == 0: return
 	current_frame = 0
 	if baked_model:
-		backend.animate_cached(armature.bones, [anim], [current_frame], [1])
+		backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
 		solved_bones = backend.construct_baked(anim, current_frame, opts)
 	else:
-		backend.animate(armature.bones, [anim], [current_frame], [1])
+		backend.animate(armature.bones, [anim], [current_frame], [smoothing])
 		solved_bones = backend.construct(armature, opts)
 	queue_redraw()
 	prev_frame = current_frame
@@ -173,10 +175,10 @@ func animate(delta : float = 0.1):
 	if frame_skip_count < frame_skip: return
 
 	if baked_model:
-		backend.animate_cached(armature.bones, [anim], [current_frame], [1])
+		backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
 		solved_bones = backend.construct_baked(anim, current_frame, opts)
 	else:
-		backend.animate(armature.bones, [anim], [current_frame], [1])
+		backend.animate(armature.bones, [anim], [current_frame], [smoothing])
 		solved_bones = backend.construct(armature, opts)
 	queue_redraw()
 	prev_frame = current_frame
@@ -218,7 +220,7 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 			var push_center = abs(size) * 0.5
 			draw_set_transform(b.pos, b.rot, Vector2.ONE)
 			draw_set_transform(b.pos, b.rot, Vector2.ONE)
-			draw_texture_rect_region(atlas, Rect2(-push_center, size), region)
+			draw_texture_rect_region(atlas, Rect2(-push_center, size), region, b.tint)
 
 			if debug:
 				var rect := Rect2(-push_center, size)
@@ -251,7 +253,7 @@ func draw_bone_mesh(bone, atlas: Texture2D, region: Rect2) -> void:
 		verts.append(v.pos)
 		var final_uv = uv_offset + (v.uv * uv_scale)
 		uvs.append(final_uv)
-		colors.append(Color.WHITE)
+		colors.append(bone.tint)
 		if debug:
 			draw_circle(v.pos, 2, Color.RED)
 	var indices_array = PackedInt32Array(indices_data)
@@ -274,7 +276,6 @@ func setup_bone_textures(bones: Array, styles: Array) -> Dictionary:
 	var result: Dictionary = {}
 	if armature == null or styles.is_empty():
 		return result
-		
 	var style = styles[model_style]
 	for b in bones:
 		for tex in style.textures:

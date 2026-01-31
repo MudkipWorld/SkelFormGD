@@ -223,23 +223,3 @@ offset_top = -23.0
 offset_bottom = -19.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="SkelFormPlayer" type="Node2D" parent="." unique_id=380776153]
-physics_interpolation_mode = 1
-position = Vector2(1412, 163)
-script = ExtResource("1_t6lng")
-file = "res://PicklesVibe.skf"
-playing = true
-looping = true
-debug = true
-metadata/_custom_type_script = "uid://bttdudx216p8f"
-
-[node name="SkelFormPlayer2" type="Node2D" parent="." unique_id=1530212980]
-physics_interpolation_mode = 1
-position = Vector2(1437, 495)
-script = ExtResource("1_t6lng")
-file = "res://BaseFTAnimated.skf"
-playing = true
-looping = true
-model_scale = Vector2(0.5, 0.5)
-metadata/_custom_type_script = "uid://bttdudx216p8f"

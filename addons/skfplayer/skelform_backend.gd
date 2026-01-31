@@ -5,11 +5,13 @@ class ConstructOptions:
 	var position: Vector2
 	var scale: Vector2
 	var fabrik_iterations : int
+	var disable_ik : bool = false
 
-	func _init(pos: Vector2 = Vector2.ZERO, s: Vector2 = Vector2.ONE, flip: bool = true, fab_i : int = 10):
+	func _init(pos: Vector2 = Vector2.ZERO, s: Vector2 = Vector2.ONE, flip: bool = true, fab_i : int = 10, _dis_ik : bool = false):
 		position = pos
 		scale = s
 		fabrik_iterations = fab_i
+		disable_ik = _dis_ik
 
 class Vertex:
 	var pos: Vector2
@@ -40,6 +42,7 @@ class Bone:
 	var init_scale: Vector2
 	var init_pos: Vector2
 	var zindex: int = 0
+	var tint : Color = Color.WHITE
 	
 	var binds: Array = []
 	var vertices: Array[Vertex] = []
@@ -76,6 +79,7 @@ class Bone:
 		b.binds = binds.duplicate(true)
 		b.indices = indices.duplicate()
 		b.vertices = []
+		b.tint = tint
 		for v in vertices:
 			var nv := Vertex.new(v.initPos, v.uv)
 			nv.pos = v.pos 
@@ -107,7 +111,7 @@ class AnimationData:
 	var cached_frames: Array = []
 	var cached_solved_frames: Array = []
 
-	func _init(_name="", _fps=24):
+	func _init(_name="", _fps=60):
 		name = _name
 		fps = _fps
 		keyframes = []
@@ -132,6 +136,7 @@ class Armature:
 	var animations: Array
 	var atlases: Array
 	var styles: Array
+	var tint : Color = Color.WHITE
 
 class CachedSolvedBone:
 	var pos: Vector2
@@ -678,7 +683,6 @@ func load_armature_from_file(path: String, bake: bool = false) -> Dictionary:
 		existing_files[path] = raw_model
 		#print("New File Detected.") 
 	return {arm = raw_model.armature, img_at = raw_model.image}
-
 
 static func build_armature_from_dict(data: Dictionary) -> Armature:
 	var arm := Armature.new()
