@@ -46,11 +46,11 @@ position = Vector2(96, 198)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
 auto_play = true
-playing = true
 looping = true
 fps = 60
 frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
+baked_model = true
 
 [node name="Skellina2" type="Node2D" parent="Skellinas" unique_id=460568199]
 physics_interpolation_mode = 1
@@ -58,12 +58,12 @@ position = Vector2(293, 195)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
 auto_play = true
-playing = true
 looping = true
 fps = 60
 frame_skip = 3
 animation_index = 1
 model_scale = Vector2(0.08, 0.08)
+baked_model = true
 
 [node name="Skellina3" type="Node2D" parent="Skellinas" unique_id=547138676]
 physics_interpolation_mode = 1
@@ -71,12 +71,12 @@ position = Vector2(484, 198)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
 auto_play = true
-playing = true
 looping = true
 fps = 60
 frame_skip = 3
 animation_index = 2
 model_scale = Vector2(0.08, 0.08)
+baked_model = true
 
 [node name="Skellina4" type="Node2D" parent="Skellinas" unique_id=1002689137]
 physics_interpolation_mode = 1
@@ -84,11 +84,11 @@ position = Vector2(681, 195)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
 auto_play = true
-playing = true
 looping = true
 fps = 60
 frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
+baked_model = true
 
 [node name="Skellina5" type="Node2D" parent="Skellinas" unique_id=339043425]
 physics_interpolation_mode = 1
@@ -96,12 +96,12 @@ position = Vector2(844, 198)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
 auto_play = true
-playing = true
 looping = true
 fps = 60
 frame_skip = 3
 animation_index = 1
 model_scale = Vector2(0.08, 0.08)
+baked_model = true
 
 [node name="Skellina6" type="Node2D" parent="Skellinas" unique_id=459308605]
 physics_interpolation_mode = 1
@@ -109,13 +109,13 @@ position = Vector2(1041, 195)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
 auto_play = true
-playing = true
 looping = true
 fps = 60
 frame_skip = 3
 animation_index = 2
 model_scale = Vector2(0.08, 0.08)
 debug = true
+baked_model = true
 
 [node name="Skellingtons" type="Control" parent="." unique_id=227986465]
 layout_mode = 1
@@ -131,7 +131,7 @@ physics_interpolation_mode = 1
 position = Vector2(102, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
-playing = true
+auto_play = true
 looping = true
 fps = 60
 frame_skip = 3
@@ -139,28 +139,26 @@ animation_index = 1
 model_scale = Vector2(0.08, 0.08)
 fabrik_iterations = 16
 model_style = 1
-baked_model = true
 
 [node name="Skellington2" type="Node2D" parent="Skellingtons" unique_id=1618866112]
 physics_interpolation_mode = 1
 position = Vector2(299, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
-playing = true
+auto_play = true
 looping = true
 fps = 60
 frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
 fabrik_iterations = 14
 model_style = 1
-baked_model = true
 
 [node name="Skellington3" type="Node2D" parent="Skellingtons" unique_id=1385546126]
 physics_interpolation_mode = 1
 position = Vector2(490, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
-playing = true
+auto_play = true
 looping = true
 fps = 60
 frame_skip = 3
@@ -168,27 +166,25 @@ animation_index = 1
 model_scale = Vector2(0.08, 0.08)
 fabrik_iterations = 12
 model_style = 1
-baked_model = true
 
 [node name="Skellington4" type="Node2D" parent="Skellingtons" unique_id=786793741]
 physics_interpolation_mode = 1
 position = Vector2(687, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
-playing = true
+auto_play = true
 looping = true
 fps = 60
 frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
 model_style = 1
-baked_model = true
 
 [node name="Skellington5" type="Node2D" parent="Skellingtons" unique_id=1964563637]
 physics_interpolation_mode = 1
 position = Vector2(850, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
-playing = true
+auto_play = true
 looping = true
 fps = 60
 frame_skip = 3
@@ -197,21 +193,19 @@ model_scale = Vector2(0.08, 0.08)
 fabrik_iterations = 8
 model_style = 1
 debug = true
-baked_model = true
 
 [node name="Skellington6" type="Node2D" parent="Skellingtons" unique_id=164820353]
 physics_interpolation_mode = 1
 position = Vector2(1047, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
-playing = true
+auto_play = true
 looping = true
 fps = 60
 frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
 fabrik_iterations = 6
 model_style = 1
-baked_model = true
 
 [node name="HSeparator" type="HSeparator" parent="." unique_id=658453589]
 layout_mode = 1

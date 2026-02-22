@@ -25,6 +25,10 @@ config/icon="uid://cf2oacln8jpuo"
 
 window/stretch/mode="canvas_items"
 
+[dotnet]
+
+project/assembly_name="SkelFormAddon"
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/skfplayer/plugin.cfg")

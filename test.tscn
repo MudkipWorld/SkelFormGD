@@ -10,5 +10,6 @@ script = ExtResource("1_37kl0")
 file = "res://skellington_baked(1).skf"
 playing = true
 looping = true
+frame_skip = 1
 animation_index = 1
 metadata/_custom_type_script = "uid://bttdudx216p8f"

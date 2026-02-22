@@ -144,6 +144,8 @@ func init_animate():
 	var anim = armature.animations[animation_index]
 	anim_length = anim.keyframes[-1].frame + 1
 	if anim_length == 0: return
+	if auto_play && !OS.has_feature("editor_hint"):
+		playing = true
 	current_frame = 0
 	if baked_model:
 		backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
@@ -220,7 +222,7 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 			var push_center = abs(size) * 0.5
 			draw_set_transform(b.pos, b.rot, Vector2.ONE)
 			draw_set_transform(b.pos, b.rot, Vector2.ONE)
-			draw_texture_rect_region(atlas, Rect2(-push_center, size), region, b.tint)
+			RenderingServer.canvas_item_add_texture_rect_region(get_canvas_item(),  Rect2(-push_center, size), atlas, region, b.tint)
 
 			if debug:
 				var rect := Rect2(-push_center, size)
