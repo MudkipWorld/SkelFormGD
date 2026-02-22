@@ -70,18 +70,18 @@ var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.n
 		debug = is_debug
 		queue_redraw()
 
-@export var baked_model : bool :
-	set(baked):
-		if baked:
+@export var cache_model : bool :
+	set(cache):
+		if cache:
 			if armature:
-				backend.bake_animations(armature)
+				backend.cache_model_animations(armature)
 		else:
 			if armature:
 				for i in armature.animations:
 					i.cached_frames.clear()
 					i.cached_solved_frames.clear()
 		
-		baked_model = baked
+		cache_model = cache
 
 @export var smoothing : int = 1
 
@@ -109,7 +109,7 @@ func load_model_from_file(filename : String = ""):
 	if !FileAccess.file_exists(filename):
 		printerr("File doesn't exist..")
 		return
-	var dict = backend.load_armature_from_file(filename, baked_model)
+	var dict = backend.load_armature_from_file(filename, cache_model)
 	armature = dict.arm
 	img_atlas = dict.img_at
 	
@@ -147,7 +147,7 @@ func init_animate():
 	if auto_play && !OS.has_feature("editor_hint"):
 		playing = true
 	current_frame = 0
-	if baked_model:
+	if cache_model:
 		backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
 		solved_bones = backend.construct_baked(anim, current_frame, opts)
 	else:
@@ -176,7 +176,7 @@ func animate(delta : float = 0.1):
 	if prev_frame == current_frame: return
 	if frame_skip_count < frame_skip: return
 
-	if baked_model:
+	if cache_model:
 		backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
 		solved_bones = backend.construct_baked(anim, current_frame, opts)
 	else:

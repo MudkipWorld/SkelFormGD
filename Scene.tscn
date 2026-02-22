@@ -50,7 +50,7 @@ looping = true
 fps = 60
 frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
-baked_model = true
+cache_model = true
 
 [node name="Skellina2" type="Node2D" parent="Skellinas" unique_id=460568199]
 physics_interpolation_mode = 1
@@ -63,7 +63,7 @@ fps = 60
 frame_skip = 3
 animation_index = 1
 model_scale = Vector2(0.08, 0.08)
-baked_model = true
+cache_model = true
 
 [node name="Skellina3" type="Node2D" parent="Skellinas" unique_id=547138676]
 physics_interpolation_mode = 1
@@ -76,7 +76,7 @@ fps = 60
 frame_skip = 3
 animation_index = 2
 model_scale = Vector2(0.08, 0.08)
-baked_model = true
+cache_model = true
 
 [node name="Skellina4" type="Node2D" parent="Skellinas" unique_id=1002689137]
 physics_interpolation_mode = 1
@@ -88,7 +88,7 @@ looping = true
 fps = 60
 frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
-baked_model = true
+cache_model = true
 
 [node name="Skellina5" type="Node2D" parent="Skellinas" unique_id=339043425]
 physics_interpolation_mode = 1
@@ -101,7 +101,7 @@ fps = 60
 frame_skip = 3
 animation_index = 1
 model_scale = Vector2(0.08, 0.08)
-baked_model = true
+cache_model = true
 
 [node name="Skellina6" type="Node2D" parent="Skellinas" unique_id=459308605]
 physics_interpolation_mode = 1
@@ -115,7 +115,7 @@ frame_skip = 3
 animation_index = 2
 model_scale = Vector2(0.08, 0.08)
 debug = true
-baked_model = true
+cache_model = true
 
 [node name="Skellingtons" type="Control" parent="." unique_id=227986465]
 layout_mode = 1

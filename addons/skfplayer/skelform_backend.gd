@@ -91,18 +91,13 @@ class Keyframe:
 	var bone_id: int
 	var element: int
 	var value: float
+	var start_handle : Vector2 = Vector2.ZERO
+	var end_handle : Vector2 = Vector2(1,1)
 	func _init(f=0, b=0, e=0, v=0.0):
 		frame = f
 		bone_id = b
 		element = e
 		value = v
-
-class CachedBoneState:
-	var pos: Vector2
-	var rot: float
-	var scale: Vector2
-	var tex: String
-	var ik_constraint: int
 
 class AnimationData:
 	var name: String
@@ -138,6 +133,13 @@ class Armature:
 	var styles: Array
 	var tint : Color = Color.WHITE
 
+class CachedBoneState:
+	var pos: Vector2
+	var rot: float
+	var scale: Vector2
+	var tex: String
+	var ik_constraint: int
+
 class CachedSolvedBone:
 	var pos: Vector2
 	var rot: float
@@ -156,13 +158,14 @@ var thread : Thread
 
 static var existing_files : Dictionary[String, ModelData] = {}
 
-func bake_animations(armature: Armature):
+
+func cache_model_animations(armature: Armature):
 	if thread == null: return
-	thread.start(bake_thread.call.bind(armature))
+	thread.start(cache_model_thread.call.bind(armature))
 	thread.wait_to_finish()
 	thread.start(bake_solved_poses.call.bind(armature))
 
-func bake_thread(armature: Armature):
+func cache_model_thread(armature: Armature):
 	#print("Baking animations...")
 	for anim in armature.animations:
 		anim.cached_frames = []
@@ -270,11 +273,11 @@ func animate_cached(bones: Array, anims: Array, frames: Array, smooth_frames: Ar
 			if cache_data.has(bone.id):
 				var state: CachedBoneState = cache_data[bone.id]
 				if smooth > 0:
-					bone.pos.x = interpolate_value(bone.pos.x, state.pos.x, 0, smooth)
-					bone.pos.y = interpolate_value(bone.pos.y, state.pos.y, 0, smooth)
-					bone.rot = interpolate_value(bone.rot, state.rot, 0, smooth)
-					bone.scale.x = interpolate_value(bone.scale.x, state.scale.x, 0, smooth)
-					bone.scale.y = interpolate_value(bone.scale.y, state.scale.y, 0, smooth)
+					bone.pos.x = interpolate_value(bone.pos.x,max_frame, state.pos.x, 0, Vector2.ZERO, Vector2(1,1))
+					bone.pos.y = interpolate_value(bone.pos.y,max_frame, state.pos.y, 0, Vector2.ZERO, Vector2(1,1))
+					bone.rot = interpolate_value(bone.rot,max_frame, state.rot, 0, Vector2.ZERO, Vector2(1,1))
+					bone.scale.x = interpolate_value(bone.scale.x,max_frame, state.scale.x, 0, Vector2.ZERO, Vector2(1,1))
+					bone.scale.y = interpolate_value(bone.scale.y,max_frame, state.scale.y, 0, Vector2.ZERO, Vector2(1,1))
 				else:
 					bone.pos = state.pos
 					bone.rot = state.rot
@@ -302,20 +305,30 @@ func animate(bones: Array, anims: Array, frames: Array, smooth_frames: Array) ->
 
 func reset_bone(bone: Bone, frame: int, smooth_frame: int, anims: Array) -> void:
 	if not is_animated("PositionX", bone.id, anims):
-		bone.pos.x = interpolate_value(bone.init_pos.x, bone.init_pos.x, frame, smooth_frame)
+		bone.pos.x = interpolate_value(bone.init_pos.x, 0, frame, bone.init_pos.x, Vector2.ZERO, Vector2(1,1))
 	if not is_animated("PositionY", bone.id, anims):
-		bone.pos.y = interpolate_value(bone.init_pos.y, bone.init_pos.y, frame, smooth_frame)
+		bone.pos.y = interpolate_value(bone.init_pos.y, 0,frame, bone.init_pos.y,Vector2.ZERO, Vector2(1,1))
 	if not is_animated("Rotation", bone.id, anims):
-		bone.rot = interpolate_value(bone.init_rot, bone.init_rot, frame, smooth_frame)
+		bone.rot = interpolate_value(bone.init_rot, 0,frame, bone.init_rot,Vector2.ZERO, Vector2(1,1))
 	if not is_animated("ScaleX", bone.id, anims):
-		bone.scale.x = interpolate_value(bone.init_scale.x, bone.init_scale.x, frame, smooth_frame)
+		bone.scale.x = interpolate_value(bone.init_scale.x, 0,frame, bone.init_scale.x, Vector2.ZERO, Vector2(1,1))
 	if not is_animated("ScaleY", bone.id, anims):
-		bone.scale.y = interpolate_value(bone.init_scale.y, bone.init_scale.y, frame, smooth_frame)
+		bone.scale.y = interpolate_value(bone.init_scale.y, 0,frame, bone.init_scale.y,Vector2.ZERO, Vector2(1,1))
 
 func is_animated(property_name: String, bone_id: int, anims: Array) -> bool:
+	var element := -1
+	match property_name:
+		"PositionX": element = 0
+		"PositionY": element = 1
+		"Rotation": element = 2
+		"ScaleX": element = 3
+		"ScaleY": element = 4
+		"IkConstraint": element = 6
+		_: return false
+
 	for anim in anims:
 		for kf in anim.keyframes:
-			if kf.bone_id == bone_id and property_matches_element(property_name, kf.element):
+			if kf.bone_id == bone_id and kf.element == element:
 				return true
 	return false
 
@@ -329,16 +342,48 @@ func property_matches_element(prop: String, element: int) -> bool:
 		"IkConstraint": return element == 6
 	return false
 
-func interpolate_value(current: float, target: float, frame: int, smooth_frame: int) -> float:
-	if smooth_frame <= 0:
-		return target
-	return lerp(current, target, 0.5) 
+func interpolate_value(current: int, max: int,start_val: float,end_val: float,start_handle: Vector2,end_handle: Vector2) -> float:
+	if(start_handle.y == 999.0 && end_handle.y == 999.0):
+		return start_val;
 
-func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: int, frame: int, default_val) -> Variant:
+	if(max == 0 || current >= max):
+		return end_val;
+	
+	var initial = current / max
+	var t = initial
+	for i in 5 :
+		var x = cubic_bezier(t, start_handle.x, end_handle.x)
+		var dx = cubic_bezier_derivative(t, start_handle.x, end_handle.x)
+		if(abs(dx) < 1e-5):
+			break
+		
+		t -= (x - initial) / dx
+		t = clamp(t, 0.0, 1.0)
+	
+
+	var progress = cubic_bezier(t, start_handle.y, end_handle.y)
+	return start_val + (end_val - start_val) * progress
+
+func cubic_bezier(t: float, p1: float, p2: float) -> float:
+	var u = 1. - t
+	return 3. * u * u * t * p1 + 3. * u * t * t * p2 + t * t * t
+
+func cubic_bezier_derivative(t: float, p1: float, p2: float) -> float:
+	var u = 1. - t
+	return 3. * u * u * p1 + 6. * u * t * (p2 - p1) + 3. * t * t * (1. - p2)
+
+
+
+func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: int, frame: int, default_val):
 	var prev = null
 	for kf in keyframes:
-		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
-			prev = kf
+		if kf.bone_id != bone_id:
+			continue
+		if kf.element != element:
+			continue
+		if kf.frame > frame:
+			break
+		prev = kf
 	return prev.value if prev != null else default_val
 
 func interpolate_bone(bone: Bone, keyframes: Array, bone_id: int, frame: int, smooth_frame: int) -> void:
@@ -364,9 +409,15 @@ func interpolate_keyframes(bone_id: int, field: float, keyframes: Array, element
 	var target_value = interpolate(current_frame, total_frames, prev_kf.value, next_kf.value)
 	return interpolate(current_frame, smooth_frame, prev_kf.value, target_value)
 
+func interpolate(current: float, max_val: float, start_val: float, end_val: float) -> float:
+	if max_val == 0 or current >= max_val:
+		return end_val
+	var t : float = current / max_val
+	return start_val + (end_val - start_val) * t
+
 func construct(armature: Armature, options: ConstructOptions = null) -> Array:
 	if options == null:
-		options = SkelformBackend.ConstructOptions.new()
+		options = ConstructOptions.new()
 	var rest_bones : Array = []
 	for b in armature.bones:
 		rest_bones.append(b.copy())
@@ -424,13 +475,22 @@ func construct_baked(anim: AnimationData, frame: float, options: ConstructOption
 func get_prev_keyframe(bone_id: int, element: int, frame: int, keyframes: Array) -> Keyframe:
 	var prev: Keyframe = null
 	for kf in keyframes:
-		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
-			prev = kf
+		if kf.bone_id != bone_id:
+			continue
+		if kf.element != element:
+			continue
+		if kf.frame > frame:
+			break
+		prev = kf
 	return prev
 
 func get_next_keyframe(bone_id: int, element: int, frame: int, keyframes: Array) -> Keyframe:
 	for kf in keyframes:
-		if kf.bone_id == bone_id and kf.element == element and kf.frame > frame:
+		if kf.bone_id != bone_id:
+			continue
+		if kf.element != element:
+			continue
+		if kf.frame > frame:
 			return kf
 	return null
 
@@ -467,27 +527,36 @@ func construct_verts(bones: Array) -> void:
 					var next_norm = Vector2(-next_dir.y, next_dir.x)
 					var average = (prev_norm + next_norm).normalized()
 					var norm_angle = atan2(average.y, average.x)
-					var rotated = rotate_point(vert.initPos, norm_angle)
+					var rotated = vert.initPos.rotated(norm_angle)
 					vert.pos = bind_bone.pos + rotated * weight
 				else:
 					var world_pos = inherit_vert(vert.initPos, bind_bone)
 					vert.pos = vert.pos.lerp(world_pos, weight)
 
 func inheritance(bones: Array, ik_rots: Dictionary) -> Array:
-	for i in range(bones.size()):
-		var bone : Bone = bones[i]
-		if bone.parent_id == -1:
+	var count := bones.size()
+	for i in range(count):
+		var bone: Bone = bones[i]
+		if bone.parent_id < 0:
 			continue
-		var parent : Bone = bones[bone.parent_id]
+
+		var parent: Bone = bones[bone.parent_id]
+
 		bone.rot += parent.rot
 		bone.scale *= parent.scale
-		bone.pos *= parent.scale
-		bone.pos = rotate_point(bone.pos, parent.rot)
-		bone.pos += parent.pos
+
+		var scaled_pos := bone.pos * parent.scale
+		var cos_r := cos(parent.rot)
+		var sin_r := sin(parent.rot)
+
+		bone.pos = Vector2(
+			scaled_pos.x * cos_r - scaled_pos.y * sin_r,
+			scaled_pos.x * sin_r + scaled_pos.y * cos_r
+		) + parent.pos
 
 		if ik_rots.has(bone.id):
 			bone.rot = ik_rots[bone.id]
-				
+
 	return bones
 
 func inverse_kinematics(bones: Array, ik_root_ids: Array, option : ConstructOptions) -> Dictionary:
@@ -567,7 +636,7 @@ func fabrik(chain: Array, root: Vector2, target: Vector2) -> void:
 		if dir.x != dir.x or dir.y != dir.y: 
 			dir = Vector2.ZERO
 		if i != 0:
-			next_length = magnitude(chain[i].pos - chain[i - 1].pos)
+			next_length = (chain[i].pos - chain[i - 1].pos).length()
 		chain[i].pos = next_pos - dir
 		next_pos = chain[i].pos
 
@@ -578,7 +647,7 @@ func fabrik(chain: Array, root: Vector2, target: Vector2) -> void:
 		if dir.x != dir.x or dir.y != dir.y: 
 			dir = Vector2.ZERO
 		if i != chain.size() - 1:
-			prev_length = magnitude(chain[i].pos - chain[i + 1].pos)
+			prev_length = (chain[i].pos - chain[i + 1].pos).length()
 		chain[i].pos = prev_pos - dir
 		prev_pos = chain[i].pos
 
@@ -606,7 +675,7 @@ func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
 			b.pos.x * valley,
 			root.y + (1.0 - peak) * sin(dist[i] * PI) * base_mag
 		)
-		b.pos = rotate_point(pos - root, base_angle) + root
+		b.pos = (pos - root).rotated(base_angle) + root
 
 func check_bone_flip(bone: Bone, scale: Vector2):
 	var either : bool = scale.x < 0 or scale.y < 0
@@ -614,24 +683,12 @@ func check_bone_flip(bone: Bone, scale: Vector2):
 	if either && !both:
 		bone.rot = -bone.rot
 
-func interpolate(current: float, max_val: float, start_val: float, end_val: float) -> float:
-	if max_val == 0 or current >= max_val:
-		return end_val
-	var t := current / max_val
-	return start_val + (end_val - start_val) * t
-
-func rotate_point(point: Vector2, rot: float) -> Vector2:
-	return Vector2(point.x * cos(rot) - point.y * sin(rot),point.x * sin(rot) + point.y * cos(rot))
-
-func magnitude(v: Vector2) -> float:
-	return sqrt(v.x * v.x + v.y * v.y)
-
 func inherit_vert(pos, bone):
-	pos = rotate_point(pos, bone.rot)
+	pos = pos.rotated(bone.rot)
 	pos += bone.pos
 	return pos
 
-func load_armature_from_file(path: String, bake: bool = false) -> Dictionary:
+func load_armature_from_file(path: String, cache: bool = false) -> Dictionary:
 	var raw_model: ModelData
 	var is_new_file: bool = false
 	if existing_files.has(path):
@@ -665,9 +722,6 @@ func load_armature_from_file(path: String, bake: bool = false) -> Dictionary:
 			atlases.append(img)
 			index +=1
 			print(_name)
-			
-
-	
 
 		zip.close()
 		var data = JSON.parse_string(json_text)
@@ -678,8 +732,8 @@ func load_armature_from_file(path: String, bake: bool = false) -> Dictionary:
 		raw_model.image = atlases
 		if thread == null:
 			thread = Thread.new()
-		if bake:
-			bake_animations(raw_model.armature)
+		if cache:
+			cache_model_animations(raw_model.armature)
 		existing_files[path] = raw_model
 		#print("New File Detected.") 
 	return {arm = raw_model.armature, img_at = raw_model.image}
