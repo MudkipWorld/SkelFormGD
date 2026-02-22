@@ -134,6 +134,7 @@ func load_model_from_file(filename : String = ""):
 	init_animate()
 
 func _physics_process(delta: float) -> void:
+	
 	animate(delta)
 
 func init_animate():
@@ -160,9 +161,8 @@ func init_animate():
 func animate(delta : float = 0.1):
 	frame_skip_count += 1
 	var arm_exists : bool = !armature or armature.animations.is_empty()
-	var animate_index_out_of_bounds : bool = animation_index < 0 or animation_index >= armature.animations.size()
-	
-	if arm_exists or animate_index_out_of_bounds: return
+
+	if arm_exists: return
 
 	var anim = armature.animations[animation_index]
 	anim_length = anim.keyframes[-1].frame + 1
@@ -213,6 +213,10 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 		var atlas: Texture2D = atlases[tex.atlas_idx]
 		if atlas == null:
 			continue
+			
+		if b.visible == 1.0:
+			continue
+		
 		if !b.vertices.is_empty():
 			var region : Rect2 = Rect2(tex.offset, tex.size)
 			draw_bone_mesh(b, atlas, region)
@@ -241,6 +245,9 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 
 func draw_bone_mesh(bone, atlas: Texture2D, region: Rect2) -> void:
 	if atlas == null or bone.vertices.is_empty():
+		return
+		
+	if bone.visible == 1.0:
 		return
 	var indices_data = bone.indices if bone.indices.size() > 0 else bone.triangles
 	if indices_data.is_empty():

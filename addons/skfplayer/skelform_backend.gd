@@ -44,6 +44,8 @@ class Bone:
 	var zindex: int = 0
 	var tint : Color = Color.WHITE
 	
+	var visible : float = 0.0
+	
 	var binds: Array = []
 	var vertices: Array[Vertex] = []
 	var indices: PackedInt32Array
@@ -80,6 +82,7 @@ class Bone:
 		b.indices = indices.duplicate()
 		b.vertices = []
 		b.tint = tint
+		b.visible = visible
 		for v in vertices:
 			var nv := Vertex.new(v.initPos, v.uv)
 			nv.pos = v.pos 
@@ -139,6 +142,8 @@ class CachedBoneState:
 	var scale: Vector2
 	var tex: String
 	var ik_constraint: int
+	var tint : Color = Color.WHITE
+	var visible : float = 0.0
 
 class CachedSolvedBone:
 	var pos: Vector2
@@ -157,7 +162,6 @@ class ModelData:
 var thread : Thread 
 
 static var existing_files : Dictionary[String, ModelData] = {}
-
 
 func cache_model_animations(armature: Armature):
 	if thread == null: return
@@ -184,12 +188,22 @@ func cache_model_thread(armature: Armature):
 				var psy = get_interpolated_val(bone.id, bone.init_scale.y, 4, f, anim.keyframes)
 				var p_tex = get_prev_keyframe_value(anim.keyframes, bone.id, 5, f, bone.tex)
 				var p_ik = int(get_prev_keyframe_value(anim.keyframes, bone.id, 6, f, bone.ik_constraint))
+				
+				var tint_r = get_interpolated_val(bone.id, bone.tint.r, 11, f, anim.keyframes)
+				var tint_g = get_interpolated_val(bone.id, bone.tint.g, 12, f, anim.keyframes)
+				var tint_b = get_interpolated_val(bone.id, bone.tint.b, 13, f, anim.keyframes)
+				var tint_a = get_interpolated_val(bone.id, bone.tint.a, 14, f, anim.keyframes)
+				var visib = get_interpolated_val(bone.id, bone.visible, 8, f, anim.keyframes)
+				
 				var state = CachedBoneState.new()
 				state.pos = Vector2(px, py)
 				state.rot = pr
 				state.scale = Vector2(psx, psy)
 				state.tex = p_tex
 				state.ik_constraint = p_ik
+				state.tint = Color(tint_r, tint_g, tint_b, tint_a)
+				state.visible = visib
+				
 				frame_data[bone.id] = state
 			anim.cached_frames.append(frame_data)
 	
@@ -278,6 +292,13 @@ func animate_cached(bones: Array, anims: Array, frames: Array, smooth_frames: Ar
 					bone.rot = interpolate_value(bone.rot,max_frame, state.rot, 0, Vector2.ZERO, Vector2(1,1))
 					bone.scale.x = interpolate_value(bone.scale.x,max_frame, state.scale.x, 0, Vector2.ZERO, Vector2(1,1))
 					bone.scale.y = interpolate_value(bone.scale.y,max_frame, state.scale.y, 0, Vector2.ZERO, Vector2(1,1))
+					
+					bone.tint.r = interpolate_value(bone.tint.r,max_frame, state.tint.r, 0, Vector2.ZERO, Vector2(1,1))
+					bone.tint.g = interpolate_value(bone.tint.g,max_frame, state.tint.g, 0, Vector2.ZERO, Vector2(1,1))
+					bone.tint.b = interpolate_value(bone.tint.b,max_frame, state.tint.b, 0, Vector2.ZERO, Vector2(1,1))
+					bone.tint.a = interpolate_value(bone.tint.a,max_frame, state.tint.a, 0, Vector2.ZERO, Vector2(1,1))
+					bone.visible = interpolate_value(bone.visible,max_frame, state.visible, 0, Vector2.ZERO, Vector2(1,1))
+					
 				else:
 					bone.pos = state.pos
 					bone.rot = state.rot
@@ -372,18 +393,11 @@ func cubic_bezier_derivative(t: float, p1: float, p2: float) -> float:
 	var u = 1. - t
 	return 3. * u * u * p1 + 6. * u * t * (p2 - p1) + 3. * t * t * (1. - p2)
 
-
-
-func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: int, frame: int, default_val):
+func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: int, frame: int, default_val) -> Variant:
 	var prev = null
 	for kf in keyframes:
-		if kf.bone_id != bone_id:
-			continue
-		if kf.element != element:
-			continue
-		if kf.frame > frame:
-			break
-		prev = kf
+		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
+			prev = kf
 	return prev.value if prev != null else default_val
 
 func interpolate_bone(bone: Bone, keyframes: Array, bone_id: int, frame: int, smooth_frame: int) -> void:
@@ -391,9 +405,15 @@ func interpolate_bone(bone: Bone, keyframes: Array, bone_id: int, frame: int, sm
 	bone.pos.y = interpolate_keyframes(bone_id, bone.pos.y, keyframes, 1, frame, smooth_frame)
 	bone.rot   = interpolate_keyframes(bone_id, bone.rot,   keyframes, 2, frame, smooth_frame)
 	bone.scale.x = interpolate_keyframes(bone_id, bone.scale.x, keyframes, 3, frame, smooth_frame) 
-	bone.scale.y = interpolate_keyframes(bone_id, bone.scale.y, keyframes, 4, frame, smooth_frame) 
-	bone.tex = get_prev_keyframe_value(keyframes, bone_id, 5, frame, bone.tex)
+	bone.scale.y = interpolate_keyframes(bone_id, bone.scale.y, keyframes, 4, frame, smooth_frame)
+	#bone.tex = get_prev_keyframe_value(keyframes, bone_id, 5, frame, bone.tex)
 	bone.ik_constraint = get_prev_keyframe_value(keyframes, bone_id, 6, frame, bone.ik_constraint)
+	
+	bone.tint.r = interpolate_keyframes(bone_id, bone.tint.r, keyframes, 11, frame, smooth_frame)
+	bone.tint.g = interpolate_keyframes(bone_id, bone.tint.g, keyframes, 12, frame, smooth_frame)
+	bone.tint.b = interpolate_keyframes(bone_id, bone.tint.b, keyframes, 13, frame, smooth_frame)
+	bone.tint.a = interpolate_keyframes(bone_id, bone.tint.a, keyframes, 14, frame, smooth_frame)
+	bone.visible = interpolate_keyframes(bone_id, bone.visible, keyframes, 8, frame, smooth_frame)
 
 func interpolate_keyframes(bone_id: int, field: float, keyframes: Array, element: int, frame: int, smooth_frame: int) -> float:
 	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
@@ -783,6 +803,12 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 		b.tex = String(bone_data.get("tex", ""))
 		b.zindex = int(bone_data.get("zindex", 0))
 
+		var r = bone_data.get("TintR", 1.0)
+		var g = bone_data.get("TintG", 1.0)
+		var bl = bone_data.get("TintB", 1.0)
+		var a = bone_data.get("TintA", 1.0)
+		b.tint = Color(r, g, bl, a)
+
 		b.ik_family_id = int(bone_data.get("ik_family_id", -1))
 		b.ik_mode = int(bone_data.get("ik_mode", 0))
 		b.ik_target_id = int(bone_data.get("ik_target_id", -1))
@@ -828,6 +854,12 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 			kf.frame = kf_data.get("frame", 0)
 			kf.bone_id = kf_data.get("bone_id", 0)
 			kf.element = kf_data.get("element", 0)
+			
+			var start_handle = kf_data.get("start_handle", {"x":0.0,"y":1.0})
+			var end_handle = kf_data.get("end_handle", {"x":0.0,"y":1.0})
+			
+			kf.start_handle = Vector2(start_handle["x"], start_handle["y"])
+			kf.end_handle = Vector2(end_handle["x"], end_handle["y"])
 			kf.value = kf_data.get("value", 0.0)
 			anim.keyframes.append(kf)
 		arm.animations.append(anim)
