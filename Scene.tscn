@@ -10,30 +10,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Processed" type="Label" parent="." unique_id=1637415227]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 35.0
-grow_horizontal = 2
-text = "Processed At Runtime"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Baked" type="Label" parent="." unique_id=726068681]
-layout_mode = 1
-anchors_preset = 14
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_top = -18.0
-offset_bottom = 15.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "Cached/ Baked"
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="Skellinas" type="Control" parent="." unique_id=167301956]
 layout_mode = 1
 anchors_preset = 10
@@ -48,9 +24,8 @@ file = "res://_skellina.skf"
 auto_play = true
 looping = true
 fps = 60
-frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
-cache_model = true
+fabrik_iterations = 5
 
 [node name="Skellina2" type="Node2D" parent="Skellinas" unique_id=460568199]
 physics_interpolation_mode = 1
@@ -60,10 +35,9 @@ file = "res://_skellina.skf"
 auto_play = true
 looping = true
 fps = 60
-frame_skip = 3
 animation_index = 1
 model_scale = Vector2(0.08, 0.08)
-cache_model = true
+fabrik_iterations = 5
 
 [node name="Skellina3" type="Node2D" parent="Skellinas" unique_id=547138676]
 physics_interpolation_mode = 1
@@ -73,10 +47,9 @@ file = "res://_skellina.skf"
 auto_play = true
 looping = true
 fps = 60
-frame_skip = 3
 animation_index = 2
 model_scale = Vector2(0.08, 0.08)
-cache_model = true
+fabrik_iterations = 5
 
 [node name="Skellina4" type="Node2D" parent="Skellinas" unique_id=1002689137]
 physics_interpolation_mode = 1
@@ -86,9 +59,8 @@ file = "res://_skellina.skf"
 auto_play = true
 looping = true
 fps = 60
-frame_skip = 3
 model_scale = Vector2(0.08, 0.08)
-cache_model = true
+fabrik_iterations = 5
 
 [node name="Skellina5" type="Node2D" parent="Skellinas" unique_id=339043425]
 physics_interpolation_mode = 1
@@ -98,10 +70,9 @@ file = "res://_skellina.skf"
 auto_play = true
 looping = true
 fps = 60
-frame_skip = 3
 animation_index = 1
 model_scale = Vector2(0.08, 0.08)
-cache_model = true
+fabrik_iterations = 5
 
 [node name="Skellina6" type="Node2D" parent="Skellinas" unique_id=459308605]
 physics_interpolation_mode = 1
@@ -111,11 +82,10 @@ file = "res://_skellina.skf"
 auto_play = true
 looping = true
 fps = 60
-frame_skip = 3
 animation_index = 2
 model_scale = Vector2(0.08, 0.08)
+fabrik_iterations = 5
 debug = true
-cache_model = true
 
 [node name="Skellingtons" type="Control" parent="." unique_id=227986465]
 layout_mode = 1
@@ -134,7 +104,7 @@ file = "res://_skellington.skf"
 auto_play = true
 looping = true
 fps = 60
-frame_skip = 3
+frame_skip = 1
 animation_index = 1
 model_scale = Vector2(0.08, 0.08)
 fabrik_iterations = 16

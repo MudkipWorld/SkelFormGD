@@ -70,7 +70,6 @@ class Bone:
 		b.pos = pos
 		b.ik_bone_ids = ik_bone_ids.duplicate(true)
 		b.ik_mode = ik_mode
-		b.ik_constraint_str = ik_constraint_str
 		b.ik_constraint = ik_constraint
 		b.ik_family_id = ik_family_id
 		b.ik_target_id = ik_target_id
@@ -92,11 +91,11 @@ class Bone:
 class Keyframe:
 	var frame: int
 	var bone_id: int
-	var element: int
+	var element: String
 	var value: float
 	var start_handle : Vector2 = Vector2.ZERO
 	var end_handle : Vector2 = Vector2(1,1)
-	func _init(f=0, b=0, e=0, v=0.0):
+	func _init(f=0, b=0, e="", v=0.0):
 		frame = f
 		bone_id = b
 		element = e
@@ -170,7 +169,6 @@ func cache_model_animations(armature: Armature):
 	thread.start(bake_solved_poses.call.bind(armature))
 
 func cache_model_thread(armature: Armature):
-	#print("Baking animations...")
 	for anim in armature.animations:
 		anim.cached_frames = []
 		if anim.keyframes.is_empty():
@@ -181,19 +179,19 @@ func cache_model_thread(armature: Armature):
 			var frame_data = {}
 			for bone_idx in range(bone_count):
 				var bone = armature.bones[bone_idx]
-				var px = get_interpolated_val(bone.id, bone.init_pos.x, 0, f, anim.keyframes)
-				var py = get_interpolated_val(bone.id, bone.init_pos.y, 1, f, anim.keyframes)
-				var pr = get_interpolated_val(bone.id, bone.init_rot, 2, f, anim.keyframes)
-				var psx = get_interpolated_val(bone.id, bone.init_scale.x, 3, f, anim.keyframes)
-				var psy = get_interpolated_val(bone.id, bone.init_scale.y, 4, f, anim.keyframes)
-				var p_tex = get_prev_keyframe_value(anim.keyframes, bone.id, 5, f, bone.tex)
-				var p_ik = int(get_prev_keyframe_value(anim.keyframes, bone.id, 6, f, bone.ik_constraint))
+				var px = get_interpolated_val(bone.id, bone.init_pos.x, "PositionX", f, anim.keyframes)
+				var py = get_interpolated_val(bone.id, bone.init_pos.y, "PositionY", f, anim.keyframes)
+				var pr = get_interpolated_val(bone.id, bone.init_rot, "Rotation", f, anim.keyframes)
+				var psx = get_interpolated_val(bone.id, bone.init_scale.x, "ScaleX", f, anim.keyframes)
+				var psy = get_interpolated_val(bone.id, bone.init_scale.y, "ScaleY", f, anim.keyframes)
+				var p_tex = get_prev_keyframe_value(anim.keyframes, bone.id, "Texture", f, bone.tex)
+				var p_ik = int(get_prev_keyframe_value(anim.keyframes, bone.id, "IkConstraint", f, bone.ik_constraint))
 				
-				var tint_r = get_interpolated_val(bone.id, bone.tint.r, 11, f, anim.keyframes)
-				var tint_g = get_interpolated_val(bone.id, bone.tint.g, 12, f, anim.keyframes)
-				var tint_b = get_interpolated_val(bone.id, bone.tint.b, 13, f, anim.keyframes)
-				var tint_a = get_interpolated_val(bone.id, bone.tint.a, 14, f, anim.keyframes)
-				var visib = get_interpolated_val(bone.id, bone.visible, 8, f, anim.keyframes)
+				var tint_r = get_interpolated_val(bone.id, bone.tint.r, "TintR", f, anim.keyframes)
+				var tint_g = get_interpolated_val(bone.id, bone.tint.g, "TintG", f, anim.keyframes)
+				var tint_b = get_interpolated_val(bone.id, bone.tint.b, "TintB", f, anim.keyframes)
+				var tint_a = get_interpolated_val(bone.id, bone.tint.a, "TintA", f, anim.keyframes)
+				var visib = get_interpolated_val(bone.id, bone.visible, "Hidden", f, anim.keyframes)
 				
 				var state = CachedBoneState.new()
 				state.pos = Vector2(px, py)
@@ -206,8 +204,6 @@ func cache_model_thread(armature: Armature):
 				
 				frame_data[bone.id] = state
 			anim.cached_frames.append(frame_data)
-	
-	#print("Animations baked.")
 
 func bake_solved_poses(armature: Armature) -> void:
 	for anim in armature.animations:
@@ -254,7 +250,7 @@ func bake_solved_poses(armature: Armature) -> void:
 				solved.bones.append(b.copy())
 			anim.cached_solved_frames.append(solved)
 
-func get_interpolated_val(bone_id: int, init_val: float, element: int, frame: int, keyframes: Array) -> float:
+func get_interpolated_val(bone_id: int, init_val: float, element: String, frame: int, keyframes: Array) -> float:
 	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
 	var next_kf = get_next_keyframe(bone_id, element, frame, keyframes)
 	if prev_kf == null:
@@ -312,18 +308,6 @@ func animate_cached(bones: Array, anims: Array, frames: Array, smooth_frames: Ar
 				else:
 					bone.reset_pose()
 
-func animate(bones: Array, anims: Array, frames: Array, smooth_frames: Array) -> void:
-	for i in range(anims.size()):
-		var anim = anims[i]
-		var frame = frames[i]
-		var smooth = smooth_frames[i] if i < smooth_frames.size() else 0
-		
-		for bone in bones:
-			interpolate_bone(bone, anim.keyframes, bone.id, frame, smooth)
-		
-		for bone in bones:
-			reset_bone(bone, frame, smooth, anims)
-
 func reset_bone(bone: Bone, frame: int, smooth_frame: int, anims: Array) -> void:
 	if not is_animated("PositionX", bone.id, anims):
 		bone.pos.x = interpolate_value(bone.init_pos.x, 0, frame, bone.init_pos.x, Vector2.ZERO, Vector2(1,1))
@@ -336,31 +320,12 @@ func reset_bone(bone: Bone, frame: int, smooth_frame: int, anims: Array) -> void
 	if not is_animated("ScaleY", bone.id, anims):
 		bone.scale.y = interpolate_value(bone.init_scale.y, 0,frame, bone.init_scale.y,Vector2.ZERO, Vector2(1,1))
 
-func is_animated(property_name: String, bone_id: int, anims: Array) -> bool:
-	var element := -1
-	match property_name:
-		"PositionX": element = 0
-		"PositionY": element = 1
-		"Rotation": element = 2
-		"ScaleX": element = 3
-		"ScaleY": element = 4
-		"IkConstraint": element = 6
-		_: return false
+func is_animated(element: String, bone_id: int, anims: Array) -> bool:
 
 	for anim in anims:
 		for kf in anim.keyframes:
 			if kf.bone_id == bone_id and kf.element == element:
 				return true
-	return false
-
-func property_matches_element(prop: String, element: int) -> bool:
-	match prop:
-		"PositionX": return element == 0
-		"PositionY": return element == 1
-		"Rotation": return element == 2
-		"ScaleX":   return element == 3
-		"ScaleY":   return element == 4
-		"IkConstraint": return element == 6
 	return false
 
 func interpolate_value(current: int, max: int,start_val: float,end_val: float,start_handle: Vector2,end_handle: Vector2) -> float:
@@ -393,29 +358,14 @@ func cubic_bezier_derivative(t: float, p1: float, p2: float) -> float:
 	var u = 1. - t
 	return 3. * u * u * p1 + 6. * u * t * (p2 - p1) + 3. * t * t * (1. - p2)
 
-func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: int, frame: int, default_val) -> Variant:
+func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: String, frame: int, default_val) -> Variant:
 	var prev = null
 	for kf in keyframes:
 		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
 			prev = kf
 	return prev.value if prev != null else default_val
 
-func interpolate_bone(bone: Bone, keyframes: Array, bone_id: int, frame: int, smooth_frame: int) -> void:
-	bone.pos.x = interpolate_keyframes(bone_id, bone.pos.x, keyframes, 0, frame, smooth_frame)
-	bone.pos.y = interpolate_keyframes(bone_id, bone.pos.y, keyframes, 1, frame, smooth_frame)
-	bone.rot   = interpolate_keyframes(bone_id, bone.rot,   keyframes, 2, frame, smooth_frame)
-	bone.scale.x = interpolate_keyframes(bone_id, bone.scale.x, keyframes, 3, frame, smooth_frame) 
-	bone.scale.y = interpolate_keyframes(bone_id, bone.scale.y, keyframes, 4, frame, smooth_frame)
-	#bone.tex = get_prev_keyframe_value(keyframes, bone_id, 5, frame, bone.tex)
-	bone.ik_constraint = get_prev_keyframe_value(keyframes, bone_id, 6, frame, bone.ik_constraint)
-	
-	bone.tint.r = interpolate_keyframes(bone_id, bone.tint.r, keyframes, 11, frame, smooth_frame)
-	bone.tint.g = interpolate_keyframes(bone_id, bone.tint.g, keyframes, 12, frame, smooth_frame)
-	bone.tint.b = interpolate_keyframes(bone_id, bone.tint.b, keyframes, 13, frame, smooth_frame)
-	bone.tint.a = interpolate_keyframes(bone_id, bone.tint.a, keyframes, 14, frame, smooth_frame)
-	bone.visible = interpolate_keyframes(bone_id, bone.visible, keyframes, 8, frame, smooth_frame)
-
-func interpolate_keyframes(bone_id: int, field: float, keyframes: Array, element: int, frame: int, smooth_frame: int) -> float:
+func interpolate_keyframes(bone_id: int, field: float, keyframes: Array, element: String, frame: int, smooth_frame: int) -> float:
 	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
 	var next_kf = get_next_keyframe(bone_id, element, frame, keyframes)
 	if prev_kf == null:
@@ -435,39 +385,7 @@ func interpolate(current: float, max_val: float, start_val: float, end_val: floa
 	var t : float = current / max_val
 	return start_val + (end_val - start_val) * t
 
-func construct(armature: Armature, options: ConstructOptions = null) -> Array:
-	if options == null:
-		options = ConstructOptions.new()
-	var rest_bones : Array = []
-	for b in armature.bones:
-		rest_bones.append(b.copy())
-
-	rest_bones = inheritance(rest_bones, {}) 
-	
-	var ik_results = inverse_kinematics(rest_bones, armature.ik_root_ids, options)
-	var final_bones := []
-	for b in armature.bones:
-		final_bones.append(b.copy())
-	final_bones = inheritance(final_bones, ik_results)
-	construct_verts(final_bones)
-	
-	for b in final_bones:
-		b.pos.y = -b.pos.y
-		b.rot = -b.rot
-
-		b.scale *= options.scale
-		b.pos *= options.scale
-		b.pos += options.position
-
-		check_bone_flip(b, options.scale)
-		
-		for v in b.vertices:
-			v.pos.y = -v.pos.y
-			v.pos *= options.scale
-
-	return final_bones
-
-func construct_baked(anim: AnimationData, frame: float, options: ConstructOptions) -> Array:
+func construct_cached(anim: AnimationData, frame: float, options: ConstructOptions) -> Array:
 	if anim.cached_solved_frames.is_empty():
 		return []
 
@@ -492,7 +410,7 @@ func construct_baked(anim: AnimationData, frame: float, options: ConstructOption
 
 	return final_bones
 
-func get_prev_keyframe(bone_id: int, element: int, frame: int, keyframes: Array) -> Keyframe:
+func get_prev_keyframe(bone_id: int, element: String, frame: int, keyframes: Array) -> Keyframe:
 	var prev: Keyframe = null
 	for kf in keyframes:
 		if kf.bone_id != bone_id:
@@ -504,7 +422,7 @@ func get_prev_keyframe(bone_id: int, element: int, frame: int, keyframes: Array)
 		prev = kf
 	return prev
 
-func get_next_keyframe(bone_id: int, element: int, frame: int, keyframes: Array) -> Keyframe:
+func get_next_keyframe(bone_id: int, element: String, frame: int, keyframes: Array) -> Keyframe:
 	for kf in keyframes:
 		if kf.bone_id != bone_id:
 			continue
@@ -616,7 +534,7 @@ func inverse_kinematics(bones: Array, ik_root_ids: Array, option : ConstructOpti
 			ik_rots[chain[b].id] = chain[b].rot
 	return ik_rots
 
-func apply_constraints(chain: Array, family: Bone, root: Vector2, target: Vector2) -> void:
+func apply_constraints(chain: Array, family: Bone, root: Vector2, target: Vector2):
 	if chain.size() < 2:
 		return
 	if family.ik_constraint == 0:
@@ -624,14 +542,13 @@ func apply_constraints(chain: Array, family: Bone, root: Vector2, target: Vector
 
 	var joint_dir : Vector2 = (chain[1].pos - root).normalized()
 	var base_dir : Vector2 = (target - root).normalized()
-	var dir : float = joint_dir.x * base_dir.y - base_dir.x * joint_dir.y
-	var base_angle := atan2(base_dir.y, base_dir.x)
-	var cw : bool = family.ik_constraint == 1 and dir > 0.0
-	var ccw : bool = family.ik_constraint == 2 and dir < 0.0
-
-	if cw or ccw:
-		for bone in chain:
-			bone.rot = -bone.rot + base_angle * 2.0
+	var dir: float = joint_dir.x * base_dir.y - base_dir.x * joint_dir.y;
+	var baseAngle: float = atan2(base_dir.y, base_dir.x);
+	var cw: bool = family.ik_constraint == 1 && dir > 0;
+	var ccw: bool = family.ik_constraint == 2 && dir < 0;
+	if ccw || cw:
+		for id in family.ik_bone_ids:
+			chain[id].rot = -chain[id].rot + baseAngle * 2
 
 func point_bones(chain: Array) -> void:
 	if chain.is_empty():
@@ -648,28 +565,28 @@ func point_bones(chain: Array) -> void:
 		var dir = last_bone.pos - prev_bone.pos
 		last_bone.rot = atan2(dir.y, dir.x)
 
-func fabrik(chain: Array, root: Vector2, target: Vector2) -> void:
-	var next_pos = target
-	var next_length = 0.0
-	for i in range(chain.size() - 1, -1, -1):
-		var dir = (next_pos - chain[i].pos).normalized() * next_length
-		if dir.x != dir.x or dir.y != dir.y: 
-			dir = Vector2.ZERO
-		if i != 0:
-			next_length = (chain[i].pos - chain[i - 1].pos).length()
-		chain[i].pos = next_pos - dir
-		next_pos = chain[i].pos
-
-	var prev_pos = root
-	var prev_length = 0.0
-	for i in range(chain.size()):
-		var dir = (prev_pos - chain[i].pos).normalized() * prev_length
-		if dir.x != dir.x or dir.y != dir.y: 
-			dir = Vector2.ZERO
-		if i != chain.size() - 1:
-			prev_length = (chain[i].pos - chain[i + 1].pos).length()
-		chain[i].pos = prev_pos - dir
-		prev_pos = chain[i].pos
+func fabrik(chain: Array, root: Vector2, target: Vector2):
+	var nextPos: Vector2 = target
+	var nextLength: float = 0.0;
+	for b in range(chain.size() - 1, -1, -1):
+		var length: Vector2 = Vector2(nextPos - chain[b].pos).normalized() * nextLength;
+		if is_nan(length.x) or is_nan(length.y): 
+			length = Vector2(0, 0)
+		if (b != 0):
+			nextLength = Vector2(chain[b].pos - chain[b - 1].pos).length();
+		chain[b].pos = nextPos - length;
+		nextPos = chain[b].pos;
+	
+	var prevPos: Vector2 = root;
+	var prevLength: float = 0.0;
+	for b in range(chain.size()):
+		var length : Vector2 = Vector2(prevPos - chain[b].pos).normalized() * prevLength
+		if is_nan(length.x) or is_nan(length.y): 
+			length = Vector2(0, 0)
+		if (b != chain.size() - 1):
+			prevLength = Vector2(chain[b].pos - chain[b + 1].pos).length();
+		chain[b].pos = prevPos - length;
+		prevPos = chain[b].pos;
 
 func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
 	if chain.size() < 2:
@@ -691,10 +608,12 @@ func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
 
 	for i in range(1, chain.size()):
 		var b = chain[i]
+
 		var pos = Vector2(
 			b.pos.x * valley,
-			root.y + (1.0 - peak) * sin(dist[i] * PI) * base_mag
+			root.y + (1.0 - peak) * sin(dist[i] * PI * 2.0) * base_mag
 		)
+
 		b.pos = (pos - root).rotated(base_angle) + root
 
 func check_bone_flip(bone: Bone, scale: Vector2):
@@ -813,7 +732,6 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 		b.ik_mode = int(bone_data.get("ik_mode", 0))
 		b.ik_target_id = int(bone_data.get("ik_target_id", -1))
 		b.ik_constraint = int(bone_data.get("ik_constraint", 0))
-		b.ik_constraint_str = String(bone_data.get("ik_constraint_str", "None"))
 
 		var ik_ids = bone_data.get("ik_bone_ids", [])
 		b.ik_bone_ids = ik_ids.duplicate(true)
@@ -853,7 +771,7 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 			var kf := Keyframe.new()
 			kf.frame = kf_data.get("frame", 0)
 			kf.bone_id = kf_data.get("bone_id", 0)
-			kf.element = kf_data.get("element", 0)
+			kf.element = kf_data.get("element", "")
 			
 			var start_handle = kf_data.get("start_handle", {"x":0.0,"y":1.0})
 			var end_handle = kf_data.get("end_handle", {"x":0.0,"y":1.0})

@@ -70,19 +70,6 @@ var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.n
 		debug = is_debug
 		queue_redraw()
 
-@export var cache_model : bool :
-	set(cache):
-		if cache:
-			if armature:
-				backend.cache_model_animations(armature)
-		else:
-			if armature:
-				for i in armature.animations:
-					i.cached_frames.clear()
-					i.cached_solved_frames.clear()
-		
-		cache_model = cache
-
 @export var smoothing : int = 1
 
 var bone_texture_results : Dictionary = {}
@@ -109,7 +96,7 @@ func load_model_from_file(filename : String = ""):
 	if !FileAccess.file_exists(filename):
 		printerr("File doesn't exist..")
 		return
-	var dict = backend.load_armature_from_file(filename, cache_model)
+	var dict = backend.load_armature_from_file(filename, true)
 	armature = dict.arm
 	img_atlas = dict.img_at
 	
@@ -148,12 +135,8 @@ func init_animate():
 	if auto_play && !OS.has_feature("editor_hint"):
 		playing = true
 	current_frame = 0
-	if cache_model:
-		backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
-		solved_bones = backend.construct_baked(anim, current_frame, opts)
-	else:
-		backend.animate(armature.bones, [anim], [current_frame], [smoothing])
-		solved_bones = backend.construct(armature, opts)
+	backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
+	solved_bones = backend.construct_cached(anim, current_frame, opts)
 	queue_redraw()
 	prev_frame = current_frame
 	frame_skip_count = 0
@@ -176,12 +159,8 @@ func animate(delta : float = 0.1):
 	if prev_frame == current_frame: return
 	if frame_skip_count < frame_skip: return
 
-	if cache_model:
-		backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
-		solved_bones = backend.construct_baked(anim, current_frame, opts)
-	else:
-		backend.animate(armature.bones, [anim], [current_frame], [smoothing])
-		solved_bones = backend.construct(armature, opts)
+	backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
+	solved_bones = backend.construct_cached(anim, current_frame, opts)
 	queue_redraw()
 	prev_frame = current_frame
 	frame_skip_count = 0

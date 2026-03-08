@@ -33,6 +33,10 @@ project/assembly_name="SkelFormAddon"
 
 enabled=PackedStringArray("res://addons/skfplayer/plugin.cfg")
 
+[physics]
+
+2d/run_on_separate_thread=true
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
