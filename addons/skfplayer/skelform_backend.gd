@@ -33,9 +33,8 @@ class Bone:
 	var scale: Vector2
 	var pos: Vector2
 	var ik_bone_ids: Array
-	var ik_mode: int
-	var ik_constraint_str: String
-	var ik_constraint: int
+	var ik_mode: String
+	var ik_constraint: String
 	var ik_family_id: int
 	var ik_target_id: int
 	var init_rot: float
@@ -106,7 +105,7 @@ class AnimationData:
 	var keyframes: Array
 	var fps: int
 	var cached_frames: Array = []
-	var cached_solved_frames: Array = []
+	var cached_bone_frames: Array = []
 
 	func _init(_name="", _fps=60):
 		name = _name
@@ -140,33 +139,22 @@ class CachedBoneState:
 	var rot: float
 	var scale: Vector2
 	var tex: String
-	var ik_constraint: int
+	var ik_constraint: String
 	var tint : Color = Color.WHITE
 	var visible : float = 0.0
 
-class CachedSolvedBone:
-	var pos: Vector2
-	var rot: float
-	var scale: Vector2
-	var tex: String
-	var ik_constraint: int
-
-class CachedSolvedFrame:
+class CachedBoneFrame:
 	var bones: Array 
 
 class ModelData:
 	var armature : Armature
 	var image : Array
 
-var thread : Thread 
-
 static var existing_files : Dictionary[String, ModelData] = {}
 
 func cache_model_animations(armature: Armature):
-	if thread == null: return
-	thread.start(cache_model_thread.call.bind(armature))
-	thread.wait_to_finish()
-	thread.start(bake_solved_poses.call.bind(armature))
+	cache_model_thread(armature)
+	cache_model_poses(armature)
 
 func cache_model_thread(armature: Armature):
 	for anim in armature.animations:
@@ -185,7 +173,7 @@ func cache_model_thread(armature: Armature):
 				var psx = get_interpolated_val(bone.id, bone.init_scale.x, "ScaleX", f, anim.keyframes)
 				var psy = get_interpolated_val(bone.id, bone.init_scale.y, "ScaleY", f, anim.keyframes)
 				var p_tex = get_prev_keyframe_value(anim.keyframes, bone.id, "Texture", f, bone.tex)
-				var p_ik = int(get_prev_keyframe_value(anim.keyframes, bone.id, "IkConstraint", f, bone.ik_constraint))
+				var p_ik = get_prev_keyframe_value(anim.keyframes, bone.id, "IkConstraint", f, bone.ik_constraint)
 				
 				var tint_r = get_interpolated_val(bone.id, bone.tint.r, "TintR", f, anim.keyframes)
 				var tint_g = get_interpolated_val(bone.id, bone.tint.g, "TintG", f, anim.keyframes)
@@ -205,9 +193,9 @@ func cache_model_thread(armature: Armature):
 				frame_data[bone.id] = state
 			anim.cached_frames.append(frame_data)
 
-func bake_solved_poses(armature: Armature) -> void:
+func cache_model_poses(armature: Armature) -> void:
 	for anim in armature.animations:
-		anim.cached_solved_frames = []
+		anim.cached_bone_frames = []
 		if anim.cached_frames.is_empty():
 			continue
 		for f in range(anim.cached_frames.size()):
@@ -244,11 +232,11 @@ func bake_solved_poses(armature: Armature) -> void:
 					bone.reset_pose()
 			final_bones = inheritance(final_bones, ik_rots)
 			construct_verts(final_bones)
-			var solved : CachedSolvedFrame = CachedSolvedFrame.new()
+			var solved : CachedBoneFrame = CachedBoneFrame.new()
 			solved.bones = []
 			for b in final_bones:
 				solved.bones.append(b.copy())
-			anim.cached_solved_frames.append(solved)
+			anim.cached_bone_frames.append(solved)
 
 func get_interpolated_val(bone_id: int, init_val: float, element: String, frame: int, keyframes: Array) -> float:
 	var prev_kf = get_prev_keyframe(bone_id, element, frame, keyframes)
@@ -386,11 +374,11 @@ func interpolate(current: float, max_val: float, start_val: float, end_val: floa
 	return start_val + (end_val - start_val) * t
 
 func construct_cached(anim: AnimationData, frame: float, options: ConstructOptions) -> Array:
-	if anim.cached_solved_frames.is_empty():
+	if anim.cached_bone_frames.is_empty():
 		return []
 
-	var idx := int(frame) % anim.cached_solved_frames.size()
-	var baked: CachedSolvedFrame = anim.cached_solved_frames[idx]
+	var idx := int(frame) % anim.cached_bone_frames.size()
+	var baked: CachedBoneFrame = anim.cached_bone_frames[idx]
 
 	var final_bones := []
 	for b in baked.bones:
@@ -459,17 +447,17 @@ func construct_verts(bones: Array) -> void:
 					var next_bone = bone_map.get(b.binds[next_idx].bone_id)
 					if not prev_bone or not next_bone:
 						continue
-					var prev_dir = (bind_bone.pos - prev_bone.pos).normalized()
-					var next_dir = (next_bone.pos - bind_bone.pos).normalized()
-					var prev_norm = Vector2(-prev_dir.y, prev_dir.x)
-					var next_norm = Vector2(-next_dir.y, next_dir.x)
-					var average = (prev_norm + next_norm).normalized()
-					var norm_angle = atan2(average.y, average.x)
-					var rotated = vert.initPos.rotated(norm_angle)
+					var prev_dir = bind_bone.pos - prev_bone.pos
+					var next_dir = next_bone.pos - bind_bone.pos
+					var prev_normal = (Vector2(-prev_dir.y, prev_dir.x)).normalized()
+					var next_normal = (Vector2(-next_dir.y, next_dir.x)).normalized()
+					var average = prev_normal + next_normal
+					var normal_angle = atan2(average.y, average.x)
+					var rotated = (vert.initPos).rotated(normal_angle)
 					vert.pos = bind_bone.pos + rotated * weight
 				else:
-					var world_pos = inherit_vert(vert.initPos, bind_bone)
-					vert.pos = vert.pos.lerp(world_pos, weight)
+					var endpos = inherit_vert(vert.initPos, bind_bone) - vert.pos
+					vert.pos += endpos * weight
 
 func inheritance(bones: Array, ik_rots: Dictionary) -> Array:
 	var count := bones.size()
@@ -517,14 +505,14 @@ func inverse_kinematics(bones: Array, ik_root_ids: Array, option : ConstructOpti
 			continue
 		
 		match root_bone.ik_mode:
-			0:
+			"FABRIK":
 				if option == null:
 					for i in range(10):
 						fabrik(chain, root_bone.pos, target_bone.pos)
 				else:
 					for i in range(option.fabrik_iterations):
 						fabrik(chain, root_bone.pos, target_bone.pos)
-			1:
+			"Arc":
 				arc_ik(chain, root_bone.pos, target_bone.pos)
 		point_bones(chain)
 		apply_constraints(chain, root_bone, root_bone.pos, target_bone.pos)
@@ -537,18 +525,16 @@ func inverse_kinematics(bones: Array, ik_root_ids: Array, option : ConstructOpti
 func apply_constraints(chain: Array, family: Bone, root: Vector2, target: Vector2):
 	if chain.size() < 2:
 		return
-	if family.ik_constraint == 0:
-		return
 
 	var joint_dir : Vector2 = (chain[1].pos - root).normalized()
 	var base_dir : Vector2 = (target - root).normalized()
 	var dir: float = joint_dir.x * base_dir.y - base_dir.x * joint_dir.y;
 	var baseAngle: float = atan2(base_dir.y, base_dir.x);
-	var cw: bool = family.ik_constraint == 1 && dir > 0;
-	var ccw: bool = family.ik_constraint == 2 && dir < 0;
+	var cw: bool = family.ik_constraint == "Clockwise" && dir > 0;
+	var ccw: bool = family.ik_constraint == "CounterClockwise" && dir < 0;
 	if ccw || cw:
-		for id in family.ik_bone_ids:
-			chain[id].rot = -chain[id].rot + baseAngle * 2
+		for i in chain:
+			i.rot = -i.rot + baseAngle * 2
 
 func point_bones(chain: Array) -> void:
 	if chain.is_empty():
@@ -565,34 +551,31 @@ func point_bones(chain: Array) -> void:
 		var dir = last_bone.pos - prev_bone.pos
 		last_bone.rot = atan2(dir.y, dir.x)
 
-func fabrik(chain: Array, root: Vector2, target: Vector2):
-	var nextPos: Vector2 = target
-	var nextLength: float = 0.0;
-	for b in range(chain.size() - 1, -1, -1):
-		var length: Vector2 = Vector2(nextPos - chain[b].pos).normalized() * nextLength;
-		if is_nan(length.x) or is_nan(length.y): 
-			length = Vector2(0, 0)
-		if (b != 0):
-			nextLength = Vector2(chain[b].pos - chain[b - 1].pos).length();
-		chain[b].pos = nextPos - length;
-		nextPos = chain[b].pos;
-	
-	var prevPos: Vector2 = root;
-	var prevLength: float = 0.0;
-	for b in range(chain.size()):
-		var length : Vector2 = Vector2(prevPos - chain[b].pos).normalized() * prevLength
-		if is_nan(length.x) or is_nan(length.y): 
-			length = Vector2(0, 0)
-		if (b != chain.size() - 1):
-			prevLength = Vector2(chain[b].pos - chain[b + 1].pos).length();
-		chain[b].pos = prevPos - length;
-		prevPos = chain[b].pos;
+func fabrik(chain: Array, root: Vector2, target: Vector2) -> void:
+	var next_pos = target
+	var next_length = 0.0
+	for i in range(chain.size() - 1, -1, -1):
+		var dir = (next_pos - chain[i].pos).normalized() * next_length
+		if dir.x != dir.x or dir.y != dir.y: 
+			dir = Vector2.ZERO
+		if i != 0:
+			next_length = (chain[i].pos - chain[i - 1].pos).length()
+		chain[i].pos = next_pos - dir
+		next_pos = chain[i].pos
+
+	var prev_pos = root
+	var prev_length = 0.0
+	for i in range(chain.size()):
+		var dir = (prev_pos - chain[i].pos).normalized() * prev_length
+		if dir.x != dir.x or dir.y != dir.y: 
+			dir = Vector2.ZERO
+		if i != chain.size() - 1:
+			prev_length = (chain[i].pos - chain[i + 1].pos).length()
+		chain[i].pos = prev_pos - dir
+		prev_pos = chain[i].pos
 
 func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
-	if chain.size() < 2:
-		return
-
-	var dist := [0.0]
+	var dist : Array = [0.0]
 	var max_length = (chain[-1].pos - root).length()
 	var curr_length = 0.0
 
@@ -608,12 +591,7 @@ func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
 
 	for i in range(1, chain.size()):
 		var b = chain[i]
-
-		var pos = Vector2(
-			b.pos.x * valley,
-			root.y + (1.0 - peak) * sin(dist[i] * PI * 2.0) * base_mag
-		)
-
+		var pos = Vector2(b.pos.x * valley, root.y + (1.0 - peak) * sin(dist[i] * PI) * base_mag)
 		b.pos = (pos - root).rotated(base_angle) + root
 
 func check_bone_flip(bone: Bone, scale: Vector2):
@@ -669,8 +647,7 @@ func load_armature_from_file(path: String, cache: bool = false) -> Dictionary:
 		raw_model = ModelData.new()
 		raw_model.armature = build_armature_from_dict(data)
 		raw_model.image = atlases
-		if thread == null:
-			thread = Thread.new()
+
 		if cache:
 			cache_model_animations(raw_model.armature)
 		existing_files[path] = raw_model
@@ -729,9 +706,9 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 		b.tint = Color(r, g, bl, a)
 
 		b.ik_family_id = int(bone_data.get("ik_family_id", -1))
-		b.ik_mode = int(bone_data.get("ik_mode", 0))
+		b.ik_mode = bone_data.get("ik_mode", "FABRIK")
 		b.ik_target_id = int(bone_data.get("ik_target_id", -1))
-		b.ik_constraint = int(bone_data.get("ik_constraint", 0))
+		b.ik_constraint = bone_data.get("ik_constraint", "Clockwise")
 
 		var ik_ids = bone_data.get("ik_bone_ids", [])
 		b.ik_bone_ids = ik_ids.duplicate(true)

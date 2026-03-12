@@ -3,7 +3,7 @@
 extends Node2D
 class_name SkelFormPlayer
 
-var backend := SkelformBackend.new()
+var backend : SkelformBackend = SkelformBackend.new()
 var armature : SkelformBackend.Armature
 var solved_bones: Array = []
 var current_frame: int = 0
@@ -13,30 +13,15 @@ var text_atlases : Array = []
 var time_accum : float = 0.0
 var prev_frame : int = 0
 var frame_skip_count : int = 0
-
 var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.new()
+
+@export_category("Setup")
 
 @export var file: String : 
 	set(new_file):
-		load_model_from_file(new_file)
-		file = new_file
-
-@export var auto_play : bool = false
-@export var playing : bool = false : 
-	set(is_playing):
-		set_physics_process(is_playing)
-		playing = is_playing
-
-@export var looping : bool
-@export_range(1, 120) var fps: int = 24
-@export var frame_skip: int = 2
-@export var animation_index : int = 0 :
-	set(index):
-		if !looping:
-			current_frame = 0
-		animation_index = index
-		#queue_redraw()
-@export var disable_ik : bool = false
+		if new_file != file:
+			load_model_from_file(new_file)
+			file = new_file
 
 @export var model_scale : Vector2 = Vector2(0.15, 0.15) : 
 	set(new_scale):
@@ -47,23 +32,36 @@ var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.n
 @export var model_position : Vector2 = Vector2(0, 0) : 
 	set(new_position):
 		model_position = new_position
-		opts.model_position = new_position
+		opts.position = new_position
 		init_animate()
 
-@export_range(1, 50) var fabrik_iterations : int = 10 :
-	set(new_it):
-		fabrik_iterations = new_it
-		opts.fabrik_iterations = new_it
+@export var model_styles : Dictionary[String, SKFStylesRes] 
 
-@export var model_style: int = 0:
-	set(new_style):
-		if armature == null:
-			return
-		if new_style < 0 or new_style >= armature.styles.size():
-			return
-		model_style = new_style
-		bone_texture_results = setup_bone_textures(solved_bones, armature.styles)
-		queue_redraw()
+@export_category("Animation")
+
+@export var auto_play : bool = false
+
+@export var playing : bool = false : 
+	set(is_playing):
+		set_physics_process(is_playing)
+		playing = is_playing
+
+@export var looping : bool
+
+@export var animation_index : int = 0 :
+	set(index):
+		if !looping:
+			current_frame = 0
+		animation_index = index
+		#queue_redraw()
+
+@export_range(1, 120) var fps: int = 24
+
+@export var frame_skip: int = 2
+
+@export_category("Debug")
+
+@export var disable_ik : bool = false
 
 @export var debug : bool = false : 
 	set(is_debug):
@@ -72,7 +70,10 @@ var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.n
 
 @export var smoothing : int = 1
 
-var bone_texture_results : Dictionary = {}
+@export_range(1, 50) var fabrik_iterations : int = 10 :
+	set(new_it):
+		fabrik_iterations = new_it
+		opts.fabrik_iterations = new_it
 
 func _ready():
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
@@ -115,13 +116,19 @@ func load_model_from_file(filename : String = ""):
 			anim_length = 0
 	else:
 		anim_length = 0
-	bone_texture_results.clear()
-	bone_texture_results = setup_bone_textures(solved_bones, armature.styles)
+	
+	if file != filename:
+		model_styles.clear()
+		for st in armature.styles:
+			var new_res : SKFStylesRes = SKFStylesRes.new()
+			new_res.style_name = st.name
+			for i in st.textures:
+				new_res.textures.append(i.name)
+			model_styles[st.name] = new_res
 	set_physics_process(playing)
 	init_animate()
 
 func _physics_process(delta: float) -> void:
-	
 	animate(delta)
 
 func init_animate():
@@ -168,6 +175,7 @@ func animate(delta : float = 0.1):
 func _draw() -> void:
 	if solved_bones.is_empty():
 		return
+	
 	draw_skeleton(solved_bones,armature.styles,text_atlases )
 
 func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
@@ -184,10 +192,11 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 		return order[a] < order[b])
 
 	var final_textures = setup_bone_textures(solved_bones, armature.styles)
-	
+
 	for b in bones:
 		if not final_textures.has(b.id):
 			continue
+		
 		var tex: SkelformBackend.TextureData = final_textures[b.id]
 		var atlas: Texture2D = atlases[tex.atlas_idx]
 		if atlas == null:
@@ -261,21 +270,28 @@ func draw_bone_mesh(bone, atlas: Texture2D, region: Rect2) -> void:
 				draw_line(verts[key.x],verts[key.y],Color(0, 1, 0, 0.5),2.0)
 
 func setup_bone_textures(bones: Array, styles: Array) -> Dictionary:
-	var result: Dictionary = {}
-	if armature == null or styles.is_empty():
+	var result := {}
+	if bones.is_empty() or styles.is_empty():
 		return result
-	var style = styles[model_style]
+
+	var visible_style_names := []
+	for st_name in model_styles.keys():
+		var res = model_styles[st_name] as SKFStylesRes
+		if res && !res.hidden:
+			visible_style_names.append(res.style_name)
+
 	for b in bones:
-		for tex in style.textures:
-			if tex.name == b.tex:
-				result[b.id] = tex
+		var tex_assigned := false
+		for st in styles:
+			if st.name not in visible_style_names:
+				continue 
+
+			for tex in st.textures:
+				if tex.name == b.tex:
+					result[b.id] = tex 
+					tex_assigned = true
+					break
+			if tex_assigned:
 				break
-		if result.has(b.id):
-			continue
-		if !result.has(b.id):
-			for s in styles:
-				for tex in s.textures:
-					if tex.name == b.tex:
-						result[b.id] = tex
-						break
+
 	return result

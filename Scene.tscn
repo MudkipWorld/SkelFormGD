@@ -1,6 +1,97 @@
 [gd_scene format=3 uid="uid://b88xkmris26bs"]
 
 [ext_resource type="Script" uid="uid://bttdudx216p8f" path="res://addons/skfplayer/skelform_player.gd" id="1_t6lng"]
+[ext_resource type="Script" uid="uid://fwv1xo7p1pyn" path="res://addons/skfplayer/Resources/skf_styles_res.gd" id="2_4cvuw"]
+
+[sub_resource type="Resource" id="Resource_4cvuw"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
+
+[sub_resource type="Resource" id="Resource_j2eoc"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
+
+[sub_resource type="Resource" id="Resource_7mckg"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
+
+[sub_resource type="Resource" id="Resource_66br4"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
+
+[sub_resource type="Resource" id="Resource_eort7"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
+
+[sub_resource type="Resource" id="Resource_dob7g"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
+
+[sub_resource type="Resource" id="Resource_q6i3i"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Suit_Backsliver", "Right Leg", "Right Knee", "Right Shoe", "BackCollar", "Neck", "Skull", "Right Eye", "Left Eye", "Hat", "Torso", "Collar", "Bowtie"]
+
+[sub_resource type="Resource" id="Resource_tysh6"]
+script = ExtResource("2_4cvuw")
+style_name = "Skelson"
+textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
+
+[sub_resource type="Resource" id="Resource_xcudr"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Suit_Backsliver", "Right Leg", "Right Knee", "Right Shoe", "BackCollar", "Neck", "Skull", "Right Eye", "Left Eye", "Hat", "Torso", "Collar", "Bowtie"]
+
+[sub_resource type="Resource" id="Resource_rjlwc"]
+script = ExtResource("2_4cvuw")
+style_name = "Skelson"
+textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
+
+[sub_resource type="Resource" id="Resource_g2wh3"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Suit_Backsliver", "Right Leg", "Right Knee", "Right Shoe", "BackCollar", "Neck", "Skull", "Right Eye", "Left Eye", "Hat", "Torso", "Collar", "Bowtie"]
+
+[sub_resource type="Resource" id="Resource_3hyav"]
+script = ExtResource("2_4cvuw")
+style_name = "Skelson"
+textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
+
+[sub_resource type="Resource" id="Resource_2lf55"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Suit_Backsliver", "Right Leg", "Right Knee", "Right Shoe", "BackCollar", "Neck", "Skull", "Right Eye", "Left Eye", "Hat", "Torso", "Collar", "Bowtie"]
+
+[sub_resource type="Resource" id="Resource_567bu"]
+script = ExtResource("2_4cvuw")
+style_name = "Skelson"
+textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
+
+[sub_resource type="Resource" id="Resource_k2vra"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Suit_Backsliver", "Right Leg", "Right Knee", "Right Shoe", "BackCollar", "Neck", "Skull", "Right Eye", "Left Eye", "Hat", "Torso", "Collar", "Bowtie"]
+
+[sub_resource type="Resource" id="Resource_qqsh0"]
+script = ExtResource("2_4cvuw")
+style_name = "Skelson"
+textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
+
+[sub_resource type="Resource" id="Resource_3fh6t"]
+script = ExtResource("2_4cvuw")
+style_name = "Default"
+textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Suit_Backsliver", "Right Leg", "Right Knee", "Right Shoe", "BackCollar", "Neck", "Skull", "Right Eye", "Left Eye", "Hat", "Torso", "Collar", "Bowtie"]
+
+[sub_resource type="Resource" id="Resource_afkpi"]
+script = ExtResource("2_4cvuw")
+style_name = "Skelson"
+textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
 
 [node name="Scene" type="Control" unique_id=673839568]
 layout_mode = 3
@@ -21,10 +112,13 @@ physics_interpolation_mode = 1
 position = Vector2(96, 198)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_4cvuw")
+})
 auto_play = true
 looping = true
 fps = 60
-model_scale = Vector2(0.08, 0.08)
 fabrik_iterations = 5
 
 [node name="Skellina2" type="Node2D" parent="Skellinas" unique_id=460568199]
@@ -32,11 +126,14 @@ physics_interpolation_mode = 1
 position = Vector2(293, 195)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_j2eoc")
+})
 auto_play = true
 looping = true
-fps = 60
 animation_index = 1
-model_scale = Vector2(0.08, 0.08)
+fps = 60
 fabrik_iterations = 5
 
 [node name="Skellina3" type="Node2D" parent="Skellinas" unique_id=547138676]
@@ -44,11 +141,14 @@ physics_interpolation_mode = 1
 position = Vector2(484, 198)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_7mckg")
+})
 auto_play = true
 looping = true
-fps = 60
 animation_index = 2
-model_scale = Vector2(0.08, 0.08)
+fps = 60
 fabrik_iterations = 5
 
 [node name="Skellina4" type="Node2D" parent="Skellinas" unique_id=1002689137]
@@ -56,10 +156,13 @@ physics_interpolation_mode = 1
 position = Vector2(681, 195)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_66br4")
+})
 auto_play = true
 looping = true
 fps = 60
-model_scale = Vector2(0.08, 0.08)
 fabrik_iterations = 5
 
 [node name="Skellina5" type="Node2D" parent="Skellinas" unique_id=339043425]
@@ -67,11 +170,14 @@ physics_interpolation_mode = 1
 position = Vector2(844, 198)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_eort7")
+})
 auto_play = true
 looping = true
-fps = 60
 animation_index = 1
-model_scale = Vector2(0.08, 0.08)
+fps = 60
 fabrik_iterations = 5
 
 [node name="Skellina6" type="Node2D" parent="Skellinas" unique_id=459308605]
@@ -79,13 +185,16 @@ physics_interpolation_mode = 1
 position = Vector2(1041, 195)
 script = ExtResource("1_t6lng")
 file = "res://_skellina.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_dob7g")
+})
 auto_play = true
 looping = true
-fps = 60
 animation_index = 2
-model_scale = Vector2(0.08, 0.08)
-fabrik_iterations = 5
+fps = 60
 debug = true
+fabrik_iterations = 5
 
 [node name="Skellingtons" type="Control" parent="." unique_id=227986465]
 layout_mode = 1
@@ -101,67 +210,79 @@ physics_interpolation_mode = 1
 position = Vector2(102, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_q6i3i"),
+"Skelson": SubResource("Resource_tysh6")
+})
 auto_play = true
 looping = true
+animation_index = 1
 fps = 60
 frame_skip = 1
-animation_index = 1
-model_scale = Vector2(0.08, 0.08)
-fabrik_iterations = 16
-model_style = 1
 
 [node name="Skellington2" type="Node2D" parent="Skellingtons" unique_id=1618866112]
 physics_interpolation_mode = 1
 position = Vector2(299, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_xcudr"),
+"Skelson": SubResource("Resource_rjlwc")
+})
 auto_play = true
 looping = true
 fps = 60
 frame_skip = 3
-model_scale = Vector2(0.08, 0.08)
 fabrik_iterations = 14
-model_style = 1
 
 [node name="Skellington3" type="Node2D" parent="Skellingtons" unique_id=1385546126]
 physics_interpolation_mode = 1
 position = Vector2(490, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_g2wh3"),
+"Skelson": SubResource("Resource_3hyav")
+})
 auto_play = true
 looping = true
+animation_index = 1
 fps = 60
 frame_skip = 3
-animation_index = 1
-model_scale = Vector2(0.08, 0.08)
 fabrik_iterations = 12
-model_style = 1
 
 [node name="Skellington4" type="Node2D" parent="Skellingtons" unique_id=786793741]
 physics_interpolation_mode = 1
 position = Vector2(687, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_2lf55"),
+"Skelson": SubResource("Resource_567bu")
+})
 auto_play = true
 looping = true
 fps = 60
 frame_skip = 3
-model_scale = Vector2(0.08, 0.08)
-model_style = 1
 
 [node name="Skellington5" type="Node2D" parent="Skellingtons" unique_id=1964563637]
 physics_interpolation_mode = 1
 position = Vector2(850, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_k2vra"),
+"Skelson": SubResource("Resource_qqsh0")
+})
 auto_play = true
 looping = true
-fps = 60
-frame_skip = 3
 animation_index = 1
-model_scale = Vector2(0.08, 0.08)
-fabrik_iterations = 8
-model_style = 1
+fps = 30
 debug = true
 
 [node name="Skellington6" type="Node2D" parent="Skellingtons" unique_id=164820353]
@@ -169,13 +290,16 @@ physics_interpolation_mode = 1
 position = Vector2(1047, 172)
 script = ExtResource("1_t6lng")
 file = "res://_skellington.skf"
+model_scale = Vector2(0.08, 0.08)
+model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
+"Default": SubResource("Resource_3fh6t"),
+"Skelson": SubResource("Resource_afkpi")
+})
 auto_play = true
+playing = true
 looping = true
 fps = 60
 frame_skip = 3
-model_scale = Vector2(0.08, 0.08)
-fabrik_iterations = 6
-model_style = 1
 
 [node name="HSeparator" type="HSeparator" parent="." unique_id=658453589]
 layout_mode = 1
