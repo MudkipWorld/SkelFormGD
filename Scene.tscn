@@ -41,6 +41,7 @@ textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Sui
 [sub_resource type="Resource" id="Resource_tysh6"]
 script = ExtResource("2_4cvuw")
 style_name = "Skelson"
+visible = false
 textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
 
 [sub_resource type="Resource" id="Resource_xcudr"]
@@ -51,6 +52,7 @@ textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Sui
 [sub_resource type="Resource" id="Resource_rjlwc"]
 script = ExtResource("2_4cvuw")
 style_name = "Skelson"
+visible = false
 textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
 
 [sub_resource type="Resource" id="Resource_g2wh3"]
@@ -61,6 +63,7 @@ textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Sui
 [sub_resource type="Resource" id="Resource_3hyav"]
 script = ExtResource("2_4cvuw")
 style_name = "Skelson"
+visible = false
 textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
 
 [sub_resource type="Resource" id="Resource_2lf55"]
@@ -111,90 +114,97 @@ grow_horizontal = 2
 physics_interpolation_mode = 1
 position = Vector2(96, 198)
 script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
+file = "res://example_models/_skellina.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_4cvuw")
 })
 auto_play = true
+playing = true
 looping = true
 fps = 60
-fabrik_iterations = 5
+smoothing = 0
+fabrik_iterations = 4
 
 [node name="Skellina2" type="Node2D" parent="Skellinas" unique_id=460568199]
 physics_interpolation_mode = 1
 position = Vector2(293, 195)
 script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
+file = "res://example_models/_skellina.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_j2eoc")
 })
 auto_play = true
+playing = true
 looping = true
 animation_index = 1
 fps = 60
-fabrik_iterations = 5
+fabrik_iterations = 4
 
 [node name="Skellina3" type="Node2D" parent="Skellinas" unique_id=547138676]
 physics_interpolation_mode = 1
 position = Vector2(484, 198)
 script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
+file = "res://example_models/_skellina.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_7mckg")
 })
 auto_play = true
+playing = true
 looping = true
 animation_index = 2
 fps = 60
-fabrik_iterations = 5
+fabrik_iterations = 4
 
 [node name="Skellina4" type="Node2D" parent="Skellinas" unique_id=1002689137]
 physics_interpolation_mode = 1
 position = Vector2(681, 195)
 script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
+file = "res://example_models/_skellina.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_66br4")
 })
 auto_play = true
+playing = true
 looping = true
 fps = 60
-fabrik_iterations = 5
+fabrik_iterations = 4
 
 [node name="Skellina5" type="Node2D" parent="Skellinas" unique_id=339043425]
 physics_interpolation_mode = 1
 position = Vector2(844, 198)
 script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
+file = "res://example_models/_skellina.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_eort7")
 })
 auto_play = true
+playing = true
 looping = true
 animation_index = 1
 fps = 60
-fabrik_iterations = 5
+fabrik_iterations = 4
 
 [node name="Skellina6" type="Node2D" parent="Skellinas" unique_id=459308605]
 physics_interpolation_mode = 1
 position = Vector2(1041, 195)
 script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
+file = "res://example_models/_skellina.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_dob7g")
 })
 auto_play = true
+playing = true
 looping = true
 animation_index = 2
 fps = 60
 debug = true
-fabrik_iterations = 5
+fabrik_iterations = 4
 
 [node name="Skellingtons" type="Control" parent="." unique_id=227986465]
 layout_mode = 1
@@ -209,87 +219,92 @@ grow_vertical = 2
 physics_interpolation_mode = 1
 position = Vector2(102, 172)
 script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
+file = "res://example_models/_skellington.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_q6i3i"),
 "Skelson": SubResource("Resource_tysh6")
 })
 auto_play = true
+playing = true
 looping = true
 animation_index = 1
 fps = 60
-frame_skip = 1
+fabrik_iterations = 4
 
 [node name="Skellington2" type="Node2D" parent="Skellingtons" unique_id=1618866112]
 physics_interpolation_mode = 1
 position = Vector2(299, 172)
 script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
+file = "res://example_models/_skellington.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_xcudr"),
 "Skelson": SubResource("Resource_rjlwc")
 })
 auto_play = true
+playing = true
 looping = true
 fps = 60
-frame_skip = 3
-fabrik_iterations = 14
+fabrik_iterations = 4
 
 [node name="Skellington3" type="Node2D" parent="Skellingtons" unique_id=1385546126]
 physics_interpolation_mode = 1
 position = Vector2(490, 172)
 script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
+file = "res://example_models/_skellington.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_g2wh3"),
 "Skelson": SubResource("Resource_3hyav")
 })
 auto_play = true
+playing = true
 looping = true
 animation_index = 1
 fps = 60
-frame_skip = 3
-fabrik_iterations = 12
+fabrik_iterations = 4
 
 [node name="Skellington4" type="Node2D" parent="Skellingtons" unique_id=786793741]
 physics_interpolation_mode = 1
 position = Vector2(687, 172)
 script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
+file = "res://example_models/_skellington.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_2lf55"),
 "Skelson": SubResource("Resource_567bu")
 })
 auto_play = true
+playing = true
 looping = true
 fps = 60
-frame_skip = 3
+fabrik_iterations = 4
 
 [node name="Skellington5" type="Node2D" parent="Skellingtons" unique_id=1964563637]
 physics_interpolation_mode = 1
 position = Vector2(850, 172)
 script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
+file = "res://example_models/_skellington.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_k2vra"),
 "Skelson": SubResource("Resource_qqsh0")
 })
 auto_play = true
+playing = true
 looping = true
 animation_index = 1
-fps = 30
+fps = 60
 debug = true
+smoothing = 0
+fabrik_iterations = 4
 
 [node name="Skellington6" type="Node2D" parent="Skellingtons" unique_id=164820353]
 physics_interpolation_mode = 1
 position = Vector2(1047, 172)
 script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
+file = "res://example_models/_skellington.skf"
 model_scale = Vector2(0.08, 0.08)
 model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 "Default": SubResource("Resource_3fh6t"),
@@ -299,7 +314,7 @@ auto_play = true
 playing = true
 looping = true
 fps = 60
-frame_skip = 3
+fabrik_iterations = 4
 
 [node name="HSeparator" type="HSeparator" parent="." unique_id=658453589]
 layout_mode = 1

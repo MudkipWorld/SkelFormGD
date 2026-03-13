@@ -24,6 +24,7 @@ config/icon="uid://cf2oacln8jpuo"
 [display]
 
 window/stretch/mode="canvas_items"
+window/vsync/vsync_mode=2
 
 [dotnet]
 

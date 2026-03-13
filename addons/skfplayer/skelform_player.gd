@@ -3,9 +3,23 @@
 extends Node2D
 class_name SkelFormPlayer
 
+var draw_batches : Dictionary = {}
+
+class DrawBatch:
+	var verts : PackedVector2Array = PackedVector2Array()
+	var uvs : PackedVector2Array = PackedVector2Array()
+	var colors : PackedColorArray = PackedColorArray()
+	var indices : PackedInt32Array = PackedInt32Array()
+
+	func clear():
+		verts.clear()
+		uvs.clear()
+		colors.clear()
+		indices.clear()
+
 var backend : SkelformBackend = SkelformBackend.new()
 var armature : SkelformBackend.Armature
-var solved_bones: Array = []
+var cached_bones: Array = []
 var current_frame: int = 0
 var anim_length: int = 0
 var img_atlas  : Array = []
@@ -16,6 +30,8 @@ var frame_skip_count : int = 0
 var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.new()
 
 @export_category("Setup")
+
+@export_tool_button("Reload Model") var reload_action = reload_model
 
 @export var file: String : 
 	set(new_file):
@@ -61,8 +77,6 @@ var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.n
 
 @export_category("Debug")
 
-@export var disable_ik : bool = false
-
 @export var debug : bool = false : 
 	set(is_debug):
 		debug = is_debug
@@ -83,21 +97,23 @@ func _ready():
 	opts.scale = model_scale
 	opts.position = model_position
 	opts.fabrik_iterations = fabrik_iterations
-	
-	load_model_from_file(file)
-	
+
 	if !OS.has_feature("editor"):
 		if auto_play: 
 			playing = true
 		else:
 			playing = false
-		set_physics_process(playing)
+	
+	set_physics_process(playing)
+
+func reload_model():
+	load_model_from_file(file)
 
 func load_model_from_file(filename : String = ""):
 	if !FileAccess.file_exists(filename):
 		printerr("File doesn't exist..")
 		return
-	var dict = backend.load_armature_from_file(filename, true)
+	var dict = backend.load_armature_from_file(filename, true, opts)
 	armature = dict.arm
 	img_atlas = dict.img_at
 	
@@ -143,12 +159,13 @@ func init_animate():
 		playing = true
 	current_frame = 0
 	backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
-	solved_bones = backend.construct_cached(anim, current_frame, opts)
+	cached_bones = backend.construct_cached(anim, current_frame, opts)
 	queue_redraw()
 	prev_frame = current_frame
 	frame_skip_count = 0
 
 func animate(delta : float = 0.1):
+	if !is_visible_in_tree() : return
 	frame_skip_count += 1
 	var arm_exists : bool = !armature or armature.animations.is_empty()
 
@@ -167,36 +184,43 @@ func animate(delta : float = 0.1):
 	if frame_skip_count < frame_skip: return
 
 	backend.animate_cached(armature.bones, [anim], [current_frame], [smoothing])
-	solved_bones = backend.construct_cached(anim, current_frame, opts)
+	cached_bones = backend.construct_cached(anim, current_frame, opts)
 	queue_redraw()
 	prev_frame = current_frame
 	frame_skip_count = 0
 
 func _draw() -> void:
-	if solved_bones.is_empty():
+	if cached_bones.is_empty():
 		return
+		
+	draw_batches.clear()
+	draw_skeleton(cached_bones, armature.styles, text_atlases)
 	
-	draw_skeleton(solved_bones,armature.styles,text_atlases )
+	for rid in draw_batches:
+		var batch : DrawBatch = draw_batches[rid]
+		if batch.indices.size() == 0:
+			continue
+		RenderingServer.canvas_item_add_triangle_array(get_canvas_item(),batch.indices,batch.verts,batch.colors,batch.uvs,PackedInt32Array(),PackedFloat32Array(),rid)
 
 func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 	if bones.is_empty():
 		return
-	
+		
 	var order : Dictionary = {}
 	for i in bones.size():
 		order[bones[i]] = i
-	
-	bones.sort_custom(func(a, b):
+
+	bones.sort_custom(func(a,b):
 		if a.zindex != b.zindex:
 			return a.zindex < b.zindex
-		return order[a] < order[b])
-
-	var final_textures = setup_bone_textures(solved_bones, armature.styles)
-
+		return order[a] < order[b]
+	)
+	var final_textures : Dictionary = setup_bone_textures(bones, styles)
+	
 	for b in bones:
-		if not final_textures.has(b.id):
+		if !final_textures.has(b.id):
 			continue
-		
+			
 		var tex: SkelformBackend.TextureData = final_textures[b.id]
 		var atlas: Texture2D = atlases[tex.atlas_idx]
 		if atlas == null:
@@ -204,70 +228,59 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 			
 		if b.visible == 1.0:
 			continue
-		
+			
 		if !b.vertices.is_empty():
 			var region : Rect2 = Rect2(tex.offset, tex.size)
-			draw_bone_mesh(b, atlas, region)
+			batch_mesh(b, atlas, region)
 		else:
-			var region : Rect2 = Rect2(tex.offset, tex.size)
-			var size = tex.size * b.scale
-			var push_center = abs(size) * 0.5
-			draw_set_transform(b.pos, b.rot, Vector2.ONE)
-			draw_set_transform(b.pos, b.rot, Vector2.ONE)
-			RenderingServer.canvas_item_add_texture_rect_region(get_canvas_item(),  Rect2(-push_center, size), atlas, region, b.tint)
+			batch_sprite(b, atlas, tex)
 
-			if debug:
-				var rect := Rect2(-push_center, size)
+func batch_mesh(bone, atlas: Texture2D, region: Rect2):
+	var batch = get_batch(atlas.get_rid())
+	var base = batch.verts.size()
+	var atlas_size = Vector2(atlas.get_width(), atlas.get_height())
+	var uv_offset = region.position / atlas_size
+	var uv_scale = region.size / atlas_size
 
-				var p0 = rect.position
-				var p1 = rect.position + Vector2(rect.size.x, 0)
-				var p2 = rect.position + rect.size
-				var p3 = rect.position + Vector2(0, rect.size.y)
-
-				draw_line(p0, p1, Color.BLUE, 2.0)
-				draw_line(p1, p2, Color.BLUE, 2.0)
-				draw_line(p2, p3, Color.BLUE, 2.0)
-				draw_line(p3, p0, Color.BLUE, 2.0)
-
-			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-func draw_bone_mesh(bone, atlas: Texture2D, region: Rect2) -> void:
-	if atlas == null or bone.vertices.is_empty():
-		return
-		
-	if bone.visible == 1.0:
-		return
-	var indices_data = bone.indices if bone.indices.size() > 0 else bone.triangles
-	if indices_data.is_empty():
-		return
-	var verts = PackedVector2Array()
-	var uvs = PackedVector2Array()
-	var colors = PackedColorArray()
-	var atlas_size := Vector2(atlas.get_width(), atlas.get_height())
-	var uv_offset : Vector2 = region.position / atlas_size
-	var uv_scale : Vector2 = region.size / atlas_size
 	for v in bone.vertices:
-		verts.append(v.pos)
-		var final_uv = uv_offset + (v.uv * uv_scale)
-		uvs.append(final_uv)
-		colors.append(bone.tint)
-		if debug:
-			draw_circle(v.pos, 2, Color.RED)
-	var indices_array = PackedInt32Array(indices_data)
-	RenderingServer.canvas_item_add_triangle_array(get_canvas_item(),indices_array,verts,colors,uvs,PackedInt32Array(),  PackedFloat32Array(), atlas.get_rid())
-	
-	if debug:
-		var edges : Dictionary = {}
-		for i in range(0, indices_array.size(), 3):
-			var tri = [indices_array[i],indices_array[i + 1],indices_array[i + 2]]
-			for j in 3:
-				var a = min(tri[j], tri[(j + 1) % 3])
-				var b = max(tri[j], tri[(j + 1) % 3])
-				var key = Vector2i(a, b)
-				edges[key] = edges.get(key, 0) + 1
-		for key in edges:
-			if edges[key] == 1:
-				draw_line(verts[key.x],verts[key.y],Color(0, 1, 0, 0.5),2.0)
+		batch.verts.append(v.pos)
+		batch.uvs.append(uv_offset + v.uv * uv_scale)
+		batch.colors.append(bone.tint)
+
+	var indices = bone.indices if bone.indices.size() > 0 else bone.triangles
+	for i in indices:
+		batch.indices.append(base + i)
+
+func batch_sprite(bone, atlas: Texture2D, tex):
+	var batch = get_batch(atlas.get_rid())
+	var size = tex.size * bone.scale
+	var half = abs(size) * 0.5
+	var transform = Transform2D(bone.rot, bone.pos)
+
+	var p0 = transform * Vector2(-half.x, -half.y)
+	var p1 = transform * Vector2( half.x, -half.y)
+	var p2 = transform * Vector2( half.x,  half.y)
+	var p3 = transform * Vector2(-half.x,  half.y)
+
+	var base = batch.verts.size()
+	batch.verts.append_array([p0,p1,p2,p3])
+	batch.colors.append_array([bone.tint,bone.tint,bone.tint,bone.tint])
+
+	var atlas_size = Vector2(atlas.get_width(), atlas.get_height())
+	var uv0 = tex.offset / atlas_size
+	var uv1 = (tex.offset + tex.size) / atlas_size
+
+	batch.uvs.append_array([
+		Vector2(uv0.x,uv0.y),
+		Vector2(uv1.x,uv0.y),
+		Vector2(uv1.x,uv1.y),
+		Vector2(uv0.x,uv1.y)
+	])
+
+	batch.indices.append_array([
+		base, base+1, base+2,
+		base, base+2, base+3
+	])
 
 func setup_bone_textures(bones: Array, styles: Array) -> Dictionary:
 	var result := {}
@@ -277,7 +290,7 @@ func setup_bone_textures(bones: Array, styles: Array) -> Dictionary:
 	var visible_style_names := []
 	for st_name in model_styles.keys():
 		var res = model_styles[st_name] as SKFStylesRes
-		if res && !res.hidden:
+		if res && res.visible:
 			visible_style_names.append(res.style_name)
 
 	for b in bones:
@@ -295,3 +308,8 @@ func setup_bone_textures(bones: Array, styles: Array) -> Dictionary:
 				break
 
 	return result
+
+func get_batch(rid: RID) -> DrawBatch:
+	if !draw_batches.has(rid):
+		draw_batches[rid] = DrawBatch.new()
+	return draw_batches[rid]

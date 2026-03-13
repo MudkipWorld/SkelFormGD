@@ -152,11 +152,11 @@ class ModelData:
 
 static var existing_files : Dictionary[String, ModelData] = {}
 
-func cache_model_animations(armature: Armature):
-	cache_model_thread(armature)
-	cache_model_poses(armature)
+func cache_model_animations(armature: Armature, options: ConstructOptions = null):
+	cache_model(armature)
+	cache_model_poses(armature, options)
 
-func cache_model_thread(armature: Armature):
+func cache_model(armature: Armature):
 	for anim in armature.animations:
 		anim.cached_frames = []
 		if anim.keyframes.is_empty():
@@ -193,7 +193,7 @@ func cache_model_thread(armature: Armature):
 				frame_data[bone.id] = state
 			anim.cached_frames.append(frame_data)
 
-func cache_model_poses(armature: Armature) -> void:
+func cache_model_poses(armature: Armature, options: ConstructOptions = null) -> void:
 	for anim in armature.animations:
 		anim.cached_bone_frames = []
 		if anim.cached_frames.is_empty():
@@ -378,10 +378,10 @@ func construct_cached(anim: AnimationData, frame: float, options: ConstructOptio
 		return []
 
 	var idx := int(frame) % anim.cached_bone_frames.size()
-	var baked: CachedBoneFrame = anim.cached_bone_frames[idx]
+	var cache: CachedBoneFrame = anim.cached_bone_frames[idx]
 
 	var final_bones := []
-	for b in baked.bones:
+	for b in cache.bones:
 		final_bones.append(b.copy())
 
 	for b in final_bones:
@@ -395,6 +395,7 @@ func construct_cached(anim: AnimationData, frame: float, options: ConstructOptio
 		for v in b.vertices:
 			v.pos.y = -v.pos.y
 			v.pos *= options.scale
+			v.pos += options.position
 
 	return final_bones
 
@@ -600,12 +601,12 @@ func check_bone_flip(bone: Bone, scale: Vector2):
 	if either && !both:
 		bone.rot = -bone.rot
 
-func inherit_vert(pos, bone):
+func inherit_vert(pos : Vector2, bone : Bone):
 	pos = pos.rotated(bone.rot)
 	pos += bone.pos
 	return pos
 
-func load_armature_from_file(path: String, cache: bool = false) -> Dictionary:
+func load_armature_from_file(path: String, cache: bool = false, options: ConstructOptions = null) -> Dictionary:
 	var raw_model: ModelData
 	var is_new_file: bool = false
 	if existing_files.has(path):
@@ -649,7 +650,7 @@ func load_armature_from_file(path: String, cache: bool = false) -> Dictionary:
 		raw_model.image = atlases
 
 		if cache:
-			cache_model_animations(raw_model.armature)
+			cache_model_animations(raw_model.armature, options)
 		existing_files[path] = raw_model
 		#print("New File Detected.") 
 	return {arm = raw_model.armature, img_at = raw_model.image}

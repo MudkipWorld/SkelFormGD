@@ -1,0 +1,14 @@
+[remap]
+
+importer="skelform.armature"
+type="Resource"
+uid="uid://cbgqxwsxwal8y"
+path="res://.godot/imported/_skellina.skf-d827f9dc3d87870e271675799edeadcd.res"
+
+[deps]
+
+source_file="res://example_models/_skellina.skf"
+dest_files=["res://.godot/imported/_skellina.skf-d827f9dc3d87870e271675799edeadcd.res"]
+
+[params]
+
