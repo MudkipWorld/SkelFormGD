@@ -51,14 +51,7 @@ var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.n
 
 @export var looping : bool
 
-@export var animation_index : int = 0 :
-	set(index):
-		if !looping:
-			current_frame = 0
-		animation_index = index
-		#queue_redraw()
-
-@export_range(1, 120) var fps: int = 24
+@export var animations : Dictionary[String, SkelformAnimationRes] 
 
 @export var frame_skip: int = 2
 
@@ -75,6 +68,8 @@ var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.n
 	set(new_it):
 		fabrik_iterations = new_it
 		opts.fabrik_iterations = new_it
+
+#--- Basic player setup
 
 func _ready():
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
@@ -111,16 +106,13 @@ func load_model_from_file(filename : String = ""):
 	
 	if !armature:
 		return
-		
-	if armature.animations.size() > animation_index:
-		var anim = armature.animations[animation_index]
-		if anim.keyframes.size() > 0:
-			anim_length = anim.keyframes[-1].frame + 1
-		else:
-			anim_length = 0
-	else:
-		anim_length = 0
 	
+	for i in armature.animations:
+		var anim_res : SkelformAnimationRes = SkelformAnimationRes.new()
+		anim_res.anim_name = i.name
+		anim_res.fps = i.fps
+		animations[i.name] = anim_res
+
 	if file != filename:
 		model_styles.clear()
 		for st in armature.styles:
@@ -132,15 +124,15 @@ func load_model_from_file(filename : String = ""):
 	set_physics_process(playing)
 	init_animate()
 
+#--- Animating
+
 func _physics_process(delta: float) -> void:
 	animate(delta)
 
 func init_animate():
 	frame_skip_count += 1
 	var arm_exists : bool = !armature or armature.animations.is_empty()
-	var animate_index_out_of_bounds : bool = animation_index < 0 or animation_index >= armature.animations.size()
-	if arm_exists or animate_index_out_of_bounds: return
-	var anim = armature.animations[animation_index]
+	var anim = get_animation_data(animations.values()[0].anim_name)
 	anim_length = anim.keyframes[-1].frame + 1
 	if anim_length == 0: return
 	if auto_play && !OS.has_feature("editor_hint"):
@@ -159,23 +151,33 @@ func animate(delta : float = 0.1):
 
 	if arm_exists: return
 
-	var anim = armature.animations[animation_index]
-	anim_length = anim.keyframes[-1].frame + 1
-	time_accum += delta
+	for an in animations.values():
+		if an.playing:
+			var anim = get_animation_data(an.anim_name)
+			anim_length = anim.keyframes[-1].frame + 1
+			time_accum += delta
 
-	if anim_length == 0: return
-	if (current_frame > (anim_length -frame_skip)) && !looping: return
+			if anim_length == 0: return
+			if (current_frame > (anim_length -frame_skip)) && !looping: return
 
-	current_frame = int(time_accum * fps) % anim_length
-	
-	if prev_frame == current_frame: return
-	if frame_skip_count < frame_skip: return
+			current_frame = int(time_accum * an.fps) % anim_length
+			
+			if prev_frame == current_frame: return
+			if frame_skip_count < frame_skip: return
 
-	backend.animate(armature.bones, [anim], [current_frame], [smoothing])
-	cached_bones = backend.construct(anim, current_frame, opts, armature)
-	queue_redraw()
-	prev_frame = current_frame
-	frame_skip_count = 0
+			backend.animate(armature.bones, [anim], [current_frame], [smoothing])
+			cached_bones = backend.construct(anim, current_frame, opts, armature)
+			queue_redraw()
+			prev_frame = current_frame
+			frame_skip_count = 0
+
+func get_animation_data(anim_name : String) -> SkelformBackend.AnimationData:
+	for i in armature.animations:
+		if i.name == anim_name:
+			return i
+	return null
+
+#--- Drawing functions
 
 func _draw() -> void:
 	if cached_bones.is_empty():
@@ -298,3 +300,62 @@ func setup_bone_textures(bones: Array, styles: Array) -> Dictionary:
 				break
 
 	return result
+
+#--- Sets and gets for bones and animations for more control
+
+func get_animation_names(working_only : bool = false) -> PackedStringArray:
+	var arr : PackedStringArray = []
+	for i in animations.keys():
+		if working_only :
+			if animations[i].playing:
+				arr.append(i)
+		else:
+			arr.append(i)
+	return arr
+
+func disable_all_animation():
+	for i in animations.keys():
+		animations[i].playing = false
+
+func set_animation(anim : String, play : bool):
+	animations[anim].playing = play
+
+func set_animations(anims : PackedStringArray, play : bool):
+	for i in anims:
+		animations[i].playing = play
+
+func get_bone_names() -> PackedStringArray:
+	var arr : PackedStringArray = []
+	for i in armature.bones:
+		arr.append(i.name)
+	return arr
+
+func set_bones_data(bones : PackedStringArray, data_anme : String, data : Variant):
+	for i in bones:
+		for l in armature.bones:
+			if i == l.name:
+				l.set(data_anme, data)
+				continue
+
+func get_bone(bone : String) -> SkelformBackend.Bone:
+	for l in armature.bones:
+		if bone == l.name:
+			return l
+	return null
+
+func get_bone_data(bone : SkelformBackend.Bone, data_name : String) -> Variant:
+	return bone.get(data_name)
+
+func get_all_bone_data(bone : SkelformBackend.Bone) -> Dictionary:
+	var data : Dictionary = {}
+	data['name'] = bone.name
+	data['id'] = bone.id
+	data['ik_family'] = bone.ik_family_id
+	data['ik_ids'] = bone.ik_bone_ids
+	data['binds'] = bone.binds
+	data['tint'] = bone.tint
+	data['visible'] = bone.visible
+	data['parent_id'] = bone.parent_id
+	data['texture'] = bone.tex
+	data['z_index'] = bone.zindex
+	return data

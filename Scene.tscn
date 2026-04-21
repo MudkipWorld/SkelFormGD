@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bttdudx216p8f" path="res://addons/skfplayer/skelform_player.gd" id="1_t6lng"]
 [ext_resource type="Script" uid="uid://fwv1xo7p1pyn" path="res://addons/skfplayer/Resources/skf_styles_res.gd" id="2_4cvuw"]
 [ext_resource type="Script" uid="uid://bvc403kpf4uyy" path="res://addons/skfplayer/skelform_backend_cache_system.gd" id="2_j2eoc"]
+[ext_resource type="Script" uid="uid://cajw2nvjfv7fk" path="res://addons/skfplayer/Resources/skf_anim_res.gd" id="4_7mckg"]
 
 [sub_resource type="Resource" id="Resource_p6bqf"]
 script = ExtResource("2_j2eoc")
@@ -12,6 +13,22 @@ script = ExtResource("2_4cvuw")
 style_name = "Default"
 textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
 
+[sub_resource type="Resource" id="Resource_ug4y7"]
+script = ExtResource("4_7mckg")
+anim_name = "Sitting"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_gq74i"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_j1vxw"]
+script = ExtResource("4_7mckg")
+anim_name = "Walk"
+fps = 60
+
 [sub_resource type="Resource" id="Resource_fidkn"]
 script = ExtResource("2_j2eoc")
 
@@ -19,6 +36,22 @@ script = ExtResource("2_j2eoc")
 script = ExtResource("2_4cvuw")
 style_name = "Default"
 textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
+
+[sub_resource type="Resource" id="Resource_er7i1"]
+script = ExtResource("4_7mckg")
+anim_name = "Sitting"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_kourn"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_n5nrp"]
+script = ExtResource("4_7mckg")
+anim_name = "Walk"
+fps = 60
+playing = true
 
 [sub_resource type="Resource" id="Resource_y5tvv"]
 script = ExtResource("2_j2eoc")
@@ -28,6 +61,22 @@ script = ExtResource("2_4cvuw")
 style_name = "Default"
 textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
 
+[sub_resource type="Resource" id="Resource_fuf5b"]
+script = ExtResource("4_7mckg")
+anim_name = "Sitting"
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_oohc0"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_plnk0"]
+script = ExtResource("4_7mckg")
+anim_name = "Walk"
+fps = 60
+
 [sub_resource type="Resource" id="Resource_hvxgu"]
 script = ExtResource("2_j2eoc")
 
@@ -35,6 +84,22 @@ script = ExtResource("2_j2eoc")
 script = ExtResource("2_4cvuw")
 style_name = "Default"
 textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
+
+[sub_resource type="Resource" id="Resource_7bf1w"]
+script = ExtResource("4_7mckg")
+anim_name = "Sitting"
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_v4ecy"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_jug1w"]
+script = ExtResource("4_7mckg")
+anim_name = "Walk"
+fps = 60
 
 [sub_resource type="Resource" id="Resource_wj8qm"]
 script = ExtResource("2_j2eoc")
@@ -44,6 +109,22 @@ script = ExtResource("2_4cvuw")
 style_name = "Default"
 textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
 
+[sub_resource type="Resource" id="Resource_h8bn0"]
+script = ExtResource("4_7mckg")
+anim_name = "Sitting"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_wbv1n"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_fgrah"]
+script = ExtResource("4_7mckg")
+anim_name = "Walk"
+fps = 60
+
 [sub_resource type="Resource" id="Resource_hwsed"]
 script = ExtResource("2_j2eoc")
 
@@ -51,6 +132,22 @@ script = ExtResource("2_j2eoc")
 script = ExtResource("2_4cvuw")
 style_name = "Default"
 textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Left Eye", "Right Eye", "Bigtie", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand", "Skull"]
+
+[sub_resource type="Resource" id="Resource_2o13y"]
+script = ExtResource("4_7mckg")
+anim_name = "Sitting"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_tiixg"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_o3hly"]
+script = ExtResource("4_7mckg")
+anim_name = "Walk"
+fps = 60
 
 [sub_resource type="Resource" id="Resource_2k4sf"]
 script = ExtResource("2_j2eoc")
@@ -66,6 +163,27 @@ style_name = "Skelson"
 visible = false
 textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
 
+[sub_resource type="Resource" id="Resource_plpyx"]
+script = ExtResource("4_7mckg")
+anim_name = "Jump"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_8fft8"]
+script = ExtResource("4_7mckg")
+anim_name = "Land"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_bq3k4"]
+script = ExtResource("4_7mckg")
+anim_name = "Run "
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_i7cmc"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+
 [sub_resource type="Resource" id="Resource_nfxsj"]
 script = ExtResource("2_j2eoc")
 
@@ -79,6 +197,27 @@ script = ExtResource("2_4cvuw")
 style_name = "Skelson"
 visible = false
 textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
+
+[sub_resource type="Resource" id="Resource_yrkt4"]
+script = ExtResource("4_7mckg")
+anim_name = "Jump"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_y3ktx"]
+script = ExtResource("4_7mckg")
+anim_name = "Land"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_lebb3"]
+script = ExtResource("4_7mckg")
+anim_name = "Run "
+fps = 60
+
+[sub_resource type="Resource" id="Resource_uwom0"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+playing = true
 
 [sub_resource type="Resource" id="Resource_bxaof"]
 script = ExtResource("2_j2eoc")
@@ -94,6 +233,27 @@ style_name = "Skelson"
 visible = false
 textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
 
+[sub_resource type="Resource" id="Resource_kkvhn"]
+script = ExtResource("4_7mckg")
+anim_name = "Jump"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_ne0b4"]
+script = ExtResource("4_7mckg")
+anim_name = "Land"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_63mf0"]
+script = ExtResource("4_7mckg")
+anim_name = "Run "
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_2slmq"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+
 [sub_resource type="Resource" id="Resource_ldgsc"]
 script = ExtResource("2_j2eoc")
 
@@ -106,6 +266,27 @@ textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Sui
 script = ExtResource("2_4cvuw")
 style_name = "Skelson"
 textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
+
+[sub_resource type="Resource" id="Resource_3jrp0"]
+script = ExtResource("4_7mckg")
+anim_name = "Jump"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_4kfsb"]
+script = ExtResource("4_7mckg")
+anim_name = "Land"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_isuk5"]
+script = ExtResource("4_7mckg")
+anim_name = "Run "
+fps = 60
+
+[sub_resource type="Resource" id="Resource_8jffj"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+playing = true
 
 [sub_resource type="Resource" id="Resource_hxa8q"]
 script = ExtResource("2_j2eoc")
@@ -120,6 +301,27 @@ script = ExtResource("2_4cvuw")
 style_name = "Skelson"
 textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
 
+[sub_resource type="Resource" id="Resource_vomtu"]
+script = ExtResource("4_7mckg")
+anim_name = "Jump"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_3u3ga"]
+script = ExtResource("4_7mckg")
+anim_name = "Land"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_s7ukq"]
+script = ExtResource("4_7mckg")
+anim_name = "Run "
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_07cw7"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+
 [sub_resource type="Resource" id="Resource_r3s5g"]
 script = ExtResource("2_j2eoc")
 
@@ -132,6 +334,27 @@ textures = ["Right Shoulder", "Right Forearm", "Right Wrist", "Right Hand", "Sui
 script = ExtResource("2_4cvuw")
 style_name = "Skelson"
 textures = ["Right Shoulder", "Right Leg", "Suit_Backsliver", "Torso", "Collar", "Bowtie", "Hat"]
+
+[sub_resource type="Resource" id="Resource_xoxj5"]
+script = ExtResource("4_7mckg")
+anim_name = "Jump"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_aktel"]
+script = ExtResource("4_7mckg")
+anim_name = "Land"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_2lhng"]
+script = ExtResource("4_7mckg")
+anim_name = "Run "
+fps = 60
+
+[sub_resource type="Resource" id="Resource_tqf7j"]
+script = ExtResource("4_7mckg")
+anim_name = "Stand"
+fps = 60
+playing = true
 
 [node name="Scene" type="Control" unique_id=673839568]
 layout_mode = 3
@@ -160,7 +383,11 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Sitting": SubResource("Resource_ug4y7"),
+"Stand": SubResource("Resource_gq74i"),
+"Walk": SubResource("Resource_j1vxw")
+})
 frame_skip = 3
 smoothing = 0
 fabrik_iterations = 4
@@ -178,8 +405,11 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-animation_index = 1
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Sitting": SubResource("Resource_er7i1"),
+"Stand": SubResource("Resource_kourn"),
+"Walk": SubResource("Resource_n5nrp")
+})
 frame_skip = 3
 fabrik_iterations = 4
 
@@ -196,8 +426,11 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-animation_index = 2
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Sitting": SubResource("Resource_fuf5b"),
+"Stand": SubResource("Resource_oohc0"),
+"Walk": SubResource("Resource_plnk0")
+})
 frame_skip = 3
 fabrik_iterations = 4
 
@@ -214,7 +447,11 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Sitting": SubResource("Resource_7bf1w"),
+"Stand": SubResource("Resource_v4ecy"),
+"Walk": SubResource("Resource_jug1w")
+})
 frame_skip = 3
 fabrik_iterations = 4
 
@@ -231,8 +468,11 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-animation_index = 1
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Sitting": SubResource("Resource_h8bn0"),
+"Stand": SubResource("Resource_wbv1n"),
+"Walk": SubResource("Resource_fgrah")
+})
 frame_skip = 3
 fabrik_iterations = 4
 
@@ -249,8 +489,11 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-animation_index = 2
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Sitting": SubResource("Resource_2o13y"),
+"Stand": SubResource("Resource_tiixg"),
+"Walk": SubResource("Resource_o3hly")
+})
 frame_skip = 3
 debug = true
 fabrik_iterations = 4
@@ -278,8 +521,12 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-animation_index = 1
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Jump": SubResource("Resource_plpyx"),
+"Land": SubResource("Resource_8fft8"),
+"Run ": SubResource("Resource_bq3k4"),
+"Stand": SubResource("Resource_i7cmc")
+})
 frame_skip = 3
 fabrik_iterations = 4
 
@@ -297,7 +544,12 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Jump": SubResource("Resource_yrkt4"),
+"Land": SubResource("Resource_y3ktx"),
+"Run ": SubResource("Resource_lebb3"),
+"Stand": SubResource("Resource_uwom0")
+})
 frame_skip = 3
 fabrik_iterations = 4
 
@@ -315,8 +567,12 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-animation_index = 1
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Jump": SubResource("Resource_kkvhn"),
+"Land": SubResource("Resource_ne0b4"),
+"Run ": SubResource("Resource_63mf0"),
+"Stand": SubResource("Resource_2slmq")
+})
 frame_skip = 3
 fabrik_iterations = 4
 
@@ -334,7 +590,12 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Jump": SubResource("Resource_3jrp0"),
+"Land": SubResource("Resource_4kfsb"),
+"Run ": SubResource("Resource_isuk5"),
+"Stand": SubResource("Resource_8jffj")
+})
 frame_skip = 3
 fabrik_iterations = 4
 
@@ -352,8 +613,12 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-animation_index = 1
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Jump": SubResource("Resource_vomtu"),
+"Land": SubResource("Resource_3u3ga"),
+"Run ": SubResource("Resource_s7ukq"),
+"Stand": SubResource("Resource_07cw7")
+})
 frame_skip = 3
 debug = true
 smoothing = 0
@@ -373,7 +638,12 @@ model_styles = Dictionary[String, ExtResource("2_4cvuw")]({
 auto_play = true
 playing = true
 looping = true
-fps = 60
+animations = Dictionary[String, ExtResource("4_7mckg")]({
+"Jump": SubResource("Resource_xoxj5"),
+"Land": SubResource("Resource_aktel"),
+"Run ": SubResource("Resource_2lhng"),
+"Stand": SubResource("Resource_tqf7j")
+})
 frame_skip = 3
 fabrik_iterations = 4
 

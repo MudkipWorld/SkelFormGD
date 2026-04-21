@@ -437,7 +437,7 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 	for anim_data in data.get("animations", []):
 		var anim : AnimationData = AnimationData.new()
 		anim.name = anim_data.get("name", "")
-		anim.fps = anim_data.get("fps", 24)
+		anim.fps = anim_data.get("fps", 60)
 		anim.keyframes = []
 		for kf_data in anim_data.get("keyframes", []):
 			var kf := Keyframe.new()
