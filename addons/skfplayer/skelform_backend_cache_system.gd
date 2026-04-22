@@ -77,6 +77,7 @@ func cache_model_poses(armature: Armature, options: ConstructOptions = null) -> 
 					bone.rot_override = s.rot
 					bone.scale_override = s.scale
 					bone.tex = s.tex
+					bone.visible = s.visible
 					bone.ik_constraint = s.ik_constraint
 				else:
 					bone.reset_bone()

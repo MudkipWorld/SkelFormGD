@@ -20,7 +20,7 @@ func interpolate_bone(bone: Bone, keyframes: Array, bone_id: int, frame: int, sm
 	bone.rot   = interpolate_keyframes(bone_id, bone.rot,   keyframes, "Rotation", frame, smooth_frame)
 	bone.scale.x = interpolate_keyframes(bone_id, bone.scale.x, keyframes, "ScaleX", frame, smooth_frame) 
 	bone.scale.y = interpolate_keyframes(bone_id, bone.scale.y, keyframes,"ScaleY", frame, smooth_frame)
-	#bone.tex = get_prev_keyframe_value(keyframes, bone_id, 5, frame, bone.tex)
+	bone.tex = get_prev_keyframe_value(keyframes, bone_id, "Texture", frame, bone.tex)
 	bone.ik_constraint = get_prev_keyframe_value(keyframes, bone_id, "IkConstraint", frame, bone.ik_constraint)
 	
 	bone.tint.r = interpolate_keyframes(bone_id, bone.tint.r, keyframes, "TintR", frame, smooth_frame)

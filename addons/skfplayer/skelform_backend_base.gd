@@ -224,6 +224,9 @@ func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: String, fr
 	for kf in keyframes:
 		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
 			prev = kf
+			
+	if element == "Texture":
+		return prev.value_str if prev != null else default_val
 	return prev.value if prev != null else default_val
 
 func interpolate_keyframes(bone_id: int, field: float, keyframes: Array, element: String, frame: int, smooth_frame: int) -> float:
@@ -394,11 +397,15 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 		b.tex = String(bone_data.get("tex", ""))
 		b.zindex = int(bone_data.get("zindex", 0))
 
-		var r = bone_data.get("TintR", 1.0)
-		var g = bone_data.get("TintG", 1.0)
-		var bl = bone_data.get("TintB", 1.0)
-		var a = bone_data.get("TintA", 1.0)
+		var tint = bone_data.get('tint', {'r' : 1.0,'g' : 1.0,'b' : 1.0,'a' : 1.0, })
+		var r = tint.get('r', 1.0)
+		var g = tint.get('g', 1.0)
+		var bl = tint.get('b', 1.0)
+		var a = tint.get('a', 1.0)
 		b.tint = Color(r, g, bl, a)
+		
+		var visib = bone_data.get('hidden', false)
+		b.visible = 1.0 if visib else 0.0
 
 		b.ik_family_id = int(bone_data.get("ik_family_id", -1))
 		b.ik_mode = bone_data.get("ik_mode", "FABRIK")
@@ -450,6 +457,7 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 			
 			kf.start_handle = Vector2(start_handle["x"], start_handle["y"])
 			kf.end_handle = Vector2(end_handle["x"], end_handle["y"])
+			kf.value_str = kf_data.get("value_str", "")
 			kf.value = kf_data.get("value", 0.0)
 			anim.keyframes.append(kf)
 		arm.animations.append(anim)
