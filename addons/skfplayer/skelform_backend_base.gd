@@ -115,13 +115,15 @@ class Keyframe:
 	var bone_id: int
 	var element: String
 	var value: float
+	var value_str : String
 	var start_handle : Vector2 = Vector2.ZERO
 	var end_handle : Vector2 = Vector2(1,1)
-	func _init(f=0, b=0, e="", v=0.0):
+	func _init(f=0, b=0, e="", v=0.0, v_str = ""):
 		frame = f
 		bone_id = b
 		element = e
 		value = v
+		value_str = v_str
 
 class AnimationData:
 	var name: String
