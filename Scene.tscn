@@ -391,7 +391,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 frame_skip = 3
 smoothing = 0
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellina2" type="Node2D" parent="Skellinas" unique_id=460568199]
 physics_interpolation_mode = 1
@@ -413,7 +412,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 })
 frame_skip = 3
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellina3" type="Node2D" parent="Skellinas" unique_id=547138676]
 physics_interpolation_mode = 1
@@ -435,7 +433,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 })
 frame_skip = 3
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellina4" type="Node2D" parent="Skellinas" unique_id=1002689137]
 physics_interpolation_mode = 1
@@ -457,7 +454,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 })
 frame_skip = 3
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellina5" type="Node2D" parent="Skellinas" unique_id=339043425]
 physics_interpolation_mode = 1
@@ -479,7 +475,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 })
 frame_skip = 3
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellina6" type="Node2D" parent="Skellinas" unique_id=459308605]
 physics_interpolation_mode = 1
@@ -502,7 +497,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 frame_skip = 3
 debug = true
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellingtons" type="Control" parent="." unique_id=227986465]
 layout_mode = 1
@@ -535,7 +529,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 })
 frame_skip = 3
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellington2" type="Node2D" parent="Skellingtons" unique_id=1618866112]
 physics_interpolation_mode = 1
@@ -559,7 +552,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 })
 frame_skip = 3
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellington3" type="Node2D" parent="Skellingtons" unique_id=1385546126]
 physics_interpolation_mode = 1
@@ -583,7 +575,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 })
 frame_skip = 3
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellington4" type="Node2D" parent="Skellingtons" unique_id=786793741]
 physics_interpolation_mode = 1
@@ -607,7 +598,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 })
 frame_skip = 3
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellington5" type="Node2D" parent="Skellingtons" unique_id=1964563637]
 physics_interpolation_mode = 1
@@ -633,7 +623,6 @@ frame_skip = 3
 debug = true
 smoothing = 0
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="Skellington6" type="Node2D" parent="Skellingtons" unique_id=164820353]
 physics_interpolation_mode = 1
@@ -657,7 +646,6 @@ animations = Dictionary[String, ExtResource("4_7mckg")]({
 })
 frame_skip = 3
 fabrik_iterations = 4
-propagate_visability = false
 
 [node name="HSeparator" type="HSeparator" parent="." unique_id=658453589]
 layout_mode = 1

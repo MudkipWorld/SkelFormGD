@@ -29,7 +29,7 @@ func cache_model(armature: Armature):
 				var tint_g = get_interpolated_val(bone.id, bone.tint.g, "TintG", f, anim.keyframes)
 				var tint_b = get_interpolated_val(bone.id, bone.tint.b, "TintB", f, anim.keyframes)
 				var tint_a = get_interpolated_val(bone.id, bone.tint.a, "TintA", f, anim.keyframes)
-				var visib = get_interpolated_val(bone.id, bone.hidden, "Hidden", f, anim.keyframes)
+				var visib = get_prev_keyframe_value(anim.keyframes, bone.id, "Hidden", f, bone.hidden)
 				
 				var state = CachedBoneState.new()
 				state.pos = Vector2(px, py)

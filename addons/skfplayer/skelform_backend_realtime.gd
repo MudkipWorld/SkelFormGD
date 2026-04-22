@@ -27,7 +27,7 @@ func interpolate_bone(bone: Bone, keyframes: Array, bone_id: int, frame: int, sm
 	bone.tint.g = interpolate_keyframes(bone_id, bone.tint.g, keyframes, "TintG", frame, smooth_frame)
 	bone.tint.b = interpolate_keyframes(bone_id, bone.tint.b, keyframes, "TintB", frame, smooth_frame)
 	bone.tint.a = interpolate_keyframes(bone_id, bone.tint.a, keyframes, "TintA", frame, smooth_frame)
-	bone.hidden = interpolate_keyframes(bone_id, bone.hidden, keyframes, "Hidden", frame, smooth_frame)
+	bone.hidden = get_prev_keyframe_value(keyframes, bone_id, "Hidden", frame, bone.hidden)
 
 func reset_bone(bone: Bone, frame: int, smooth_frame: int, anims: Array) -> void:
 	if not is_animated("PositionX", bone.id, anims):
