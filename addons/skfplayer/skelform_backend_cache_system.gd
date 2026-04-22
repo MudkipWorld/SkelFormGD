@@ -29,7 +29,7 @@ func cache_model(armature: Armature):
 				var tint_g = get_interpolated_val(bone.id, bone.tint.g, "TintG", f, anim.keyframes)
 				var tint_b = get_interpolated_val(bone.id, bone.tint.b, "TintB", f, anim.keyframes)
 				var tint_a = get_interpolated_val(bone.id, bone.tint.a, "TintA", f, anim.keyframes)
-				var visib = get_interpolated_val(bone.id, bone.visible, "Hidden", f, anim.keyframes)
+				var visib = get_interpolated_val(bone.id, bone.hidden, "Hidden", f, anim.keyframes)
 				
 				var state = CachedBoneState.new()
 				state.pos = Vector2(px, py)
@@ -38,7 +38,7 @@ func cache_model(armature: Armature):
 				state.tex = p_tex
 				state.ik_constraint = p_ik
 				state.tint = Color(tint_r, tint_g, tint_b, tint_a)
-				state.visible = visib
+				state.hidden = visib
 				
 				frame_data[bone.id] = state
 			anim.cached_frames.append(frame_data)
@@ -77,7 +77,7 @@ func cache_model_poses(armature: Armature, options: ConstructOptions = null) -> 
 					bone.rot_override = s.rot
 					bone.scale_override = s.scale
 					bone.tex = s.tex
-					bone.visible = s.visible
+					bone.hidden = s.hidden
 					bone.ik_constraint = s.ik_constraint
 				else:
 					bone.reset_bone()
@@ -141,6 +141,9 @@ func construct(anim: AnimationData, frame: float, options: ConstructOptions, _ar
 			v.pos.x = v.pos_override.x
 			v.pos *= options.scale
 			v.pos += options.position
+
+	if options.propagate_visibility:
+		check_hidden(cache.bones)
 
 	return cache.bones
 

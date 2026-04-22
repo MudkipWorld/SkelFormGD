@@ -7,12 +7,14 @@ class ConstructOptions:
 	var scale: Vector2
 	var fabrik_iterations : int
 	var disable_ik : bool = false
+	var propagate_visibility : bool = false
 
-	func _init(pos: Vector2 = Vector2.ZERO, s: Vector2 = Vector2.ONE, flip: bool = true, fab_i : int = 10, _dis_ik : bool = false):
+	func _init(pos: Vector2 = Vector2.ZERO, s: Vector2 = Vector2.ONE, flip: bool = true, fab_i : int = 10, _dis_ik : bool = false, prop_visib : bool = false):
 		position = pos
 		scale = s
 		fabrik_iterations = fab_i
 		disable_ik = _dis_ik
+		propagate_visibility = prop_visib
 
 class Vertex:
 	var pos: Vector2
@@ -51,7 +53,7 @@ class Bone:
 	var zindex: int = 0
 	var tint : Color = Color.WHITE
 	
-	var visible : float = 0.0
+	var hidden : float = 0.0
 	
 	var binds: Array = []
 	var vertices: Array[Vertex] = []
@@ -95,7 +97,7 @@ class Bone:
 		b.indices = indices.duplicate()
 		b.vertices = []
 		b.tint = tint
-		b.visible = visible
+		b.hidden = hidden
 		for v in vertices:
 			var nv := Vertex.new(v.initPos, v.uv)
 			nv.pos_override = v.pos_override
@@ -167,7 +169,7 @@ class CachedBoneState:
 	var tex: String
 	var ik_constraint: String
 	var tint : Color = Color.WHITE
-	var visible : float = 0.0
+	var hidden : float = 0.0
 
 class CachedBoneFrame:
 	var bones: Array 
@@ -304,6 +306,16 @@ func check_bone_flip(bone: Bone, scale: Vector2):
 	if either && !both:
 		bone.rot = -bone.rot
 
+func check_hidden(bones: Array):
+	var map : Dictionary[int, Bone] = {}
+	for i in range(bones.size()):
+		if bones[i].hidden == 1.0:
+			map[bones[i].id] = bones[i]
+
+	for i in range(bones.size()):
+		if bones[i].parent_id != -1 && map.get(bones[i].parent_id, null) != null:
+			bones[i].hidden = map[bones[i].parent_id].hidden
+
 func inherit_vert(pos : Vector2, bone : Bone):
 	pass
 
@@ -406,8 +418,8 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 		var a = tint.get('a', 1.0)
 		b.tint = Color(r, g, bl, a)
 		
-		var visib = bone_data.get('hidden', false)
-		b.visible = 1.0 if visib else 0.0
+		var visib = bone_data.get('hidden', 0.0)
+		b.hidden = visib
 
 		b.ik_family_id = int(bone_data.get("ik_family_id", -1))
 		b.ik_mode = bone_data.get("ik_mode", "FABRIK")

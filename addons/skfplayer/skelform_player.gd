@@ -69,6 +69,11 @@ var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.n
 		fabrik_iterations = new_it
 		opts.fabrik_iterations = new_it
 
+@export var propagate_visibility :  bool = false:
+	set(new_pv):
+		propagate_visibility = new_pv
+		opts.propagate_visibility = new_pv
+
 #--- Basic player setup
 
 func _ready():
@@ -79,6 +84,7 @@ func _ready():
 	opts.scale = model_scale
 	opts.position = model_position
 	opts.fabrik_iterations = fabrik_iterations
+	opts.propagate_visibility = propagate_visibility
 
 	if !OS.has_feature("editor"):
 		if auto_play: 
@@ -207,7 +213,7 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 		if atlas == null:
 			continue
 			
-		if b.visible == 1.0:
+		if b.hidden == 1.0:
 			continue
 		
 		if !b.vertices.is_empty():
@@ -240,7 +246,7 @@ func draw_bone_mesh(bone, atlas: Texture2D, region: Rect2) -> void:
 	if atlas == null or bone.vertices.is_empty():
 		return
 		
-	if bone.visible == 1.0:
+	if bone.hidden == 1.0:
 		return
 	var indices_data = bone.indices if bone.indices.size() > 0 else bone.triangles
 	if indices_data.is_empty():
