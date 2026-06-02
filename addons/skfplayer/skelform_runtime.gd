@@ -49,7 +49,7 @@ class Bone:
 	var init_scale: Vector2
 	var init_pos: Vector2
 	
-	var init_hidden : float
+	var init_hidden : float = 0.0
 	
 	var zindex: int = 0
 	var tint : Color = Color.WHITE
@@ -216,11 +216,11 @@ func animate(bones: Array, anims: Array, frames: Array, smooth_frames: Array) ->
 			
 			
 			var bone = bones[kf.bone_id]
-			interpolate_bone(bone, kf, next_kf, frame, smooth)
+			interpolate_bone(bone, kf, next_kf, frame, smooth, anims[a].keyframes)
 
 	reset_bones(bones, anims, frames[0], smooth_frames[0])
 
-func interpolate_bone(bone: Bone, keyframe: Keyframe, nextKf: Keyframe ,frame: int, smooth_frame: int) -> void:
+func interpolate_bone(bone: Bone, keyframe: Keyframe, nextKf: Keyframe ,frame: int, smooth_frame: int, keyframes : Array = []) -> void:
 	if (keyframe.element == "PositionX"):
 		bone.pos.x = interpolate_keyframes(bone.pos.x, keyframe, nextKf, frame, smooth_frame)
 	if (keyframe.element == "PositionY"):
@@ -241,9 +241,12 @@ func interpolate_bone(bone: Bone, keyframe: Keyframe, nextKf: Keyframe ,frame: i
 		bone.tint.a = interpolate_keyframes( bone.tint.a, keyframe, nextKf, frame, smooth_frame)
 	
 	# Will come back to later
-	#bone.hidden = get_prev_keyframe_value(keyframes, bone_id, "Hidden", frame, bone.hidden)
-	#bone.tex = get_prev_keyframe_value(keyframes, bone_id, "Texture", frame, bone.tex)
-	#bone.ik_constraint = get_prev_keyframe_value(keyframes, bone_id, "IkConstraint", frame, bone.ik_constraint)
+	if (keyframe.element == "Hidden"):
+		bone.hidden = keyframe.value
+	if (keyframe.element == "Texture"):
+		bone.tex = keyframe.value_str
+	if (keyframe.element == "IkConstraint"):
+		bone.ik_constraint = keyframe.value_str
 
 func interpolate_keyframes(field: float, prevKf: Keyframe, nextKf: Keyframe, frame: int, smoothFrame: int) -> float:
 	var totalFrames = nextKf.frame - prevKf.frame
@@ -288,7 +291,7 @@ func reset_bones(bones, animations, frame, smoothFrame):
 			bone.scale = bone.scale.lerp(bone.init_scale, 1.0)
 			bone.hidden = bone.init_hidden
 
-func construct(options: ConstructOptions, armature : Armature) -> Array:
+func construct(options: ConstructOptions, armature : Armature, delta : float) -> Array:
 	
 	var constructed_bones : Array = []
 	if armature.constructed_by_id.has(get_instance_id()):
@@ -306,14 +309,17 @@ func construct(options: ConstructOptions, armature : Armature) -> Array:
 	reset_inheritance(constructed_bones, armature.bones)
 	inheritance(constructed_bones, ik_rots, [])
 
-	simulate_physics(armature.bones,constructed_bones)
+	simulate_physics(armature.bones, constructed_bones, delta)
 
 	reset_inheritance(constructed_bones, armature.bones)
 	inheritance(constructed_bones,ik_rots,armature.bones)
 
 	construct_verts(constructed_bones)
 
-	for b in constructed_bones:
+	for i in range(constructed_bones.size()):
+		var b : Bone = constructed_bones[i]
+		var ab : Bone = armature.bones[i]
+		b.hidden = ab.hidden
 		b.pos.y = -b.pos.y
 		b.rot = -b.rot
 
@@ -328,7 +334,7 @@ func construct(options: ConstructOptions, armature : Armature) -> Array:
 			v.pos *= options.scale
 	
 	if options.propagate_visibility:
-		check_hidden(constructed_bones)
+		propagate_visibility(constructed_bones)
 
 	return constructed_bones
 
@@ -338,7 +344,7 @@ func reset_inheritance(constructed_bones : Array, bones : Array):
 		constructed_bones[b].rot = bones[b].rot
 		constructed_bones[b].scale = bones[b].scale
 
-func inheritance(bones: Array, ik_rots, armature_bones: Array) -> Array:
+func inheritance(bones: Array, ik_rots, armature_bones: Array):
 	for b in range(bones.size()):
 		var bone = bones[b]
 		if bone.parent_id != -1:
@@ -349,13 +355,13 @@ func inheritance(bones: Array, ik_rots, armature_bones: Array) -> Array:
 					break
 					
 			var orbit_rot = parent.rot
-			if armature_bones.size() > 0 and armature_bones[b].phys_sway > 0.0:
+			if armature_bones.size() > 0 && armature_bones[b].phys_sway > 0.0:
 				orbit_rot -= armature_bones[b].phys_global_orbit_diff
-
+				
 			bone.rot += orbit_rot
 			bone.scale *= parent.scale
 			bone.pos *= parent.scale
-			bone.pos = bone.pos.rotated(parent.rot)
+			bone.pos = bones[b].pos.rotated(parent.rot)
 			bone.pos += parent.pos
 
 		if ik_rots.has(bone.id):
@@ -368,8 +374,6 @@ func inheritance(bones: Array, ik_rots, armature_bones: Array) -> Array:
 				bone.pos = armature_bones[b].phys_global_pos
 			if armature_bones[b].phys_scale_damping > 0.0:
 				bone.scale = armature_bones[b].phys_global_scale
-	
-	return bones
 
 # ---------- Mesh
 
@@ -434,7 +438,7 @@ func apply_constraints(chain: Array, family: Bone, root: Vector2, target: Vector
 
 # ---------- Physics
 
-func simulate_physics(armature_bones : Array, constructed_bones: Array):
+func simulate_physics(armature_bones : Array, constructed_bones: Array, delta : float):
 	var parent_map: Dictionary = {}
 	for b in constructed_bones:
 		parent_map[b.id] = b
@@ -448,22 +452,19 @@ func simulate_physics(armature_bones : Array, constructed_bones: Array):
 
 		#interpolate position
 		if(arm_bone.phys_pos_damping > 0 || arm_bone.phys_sway > 0):
-			var phys_pos : Vector2 = arm_bone.phys_global_pos
 			var damping : Vector2 = Vector2(arm_bone.phys_pos_damping, arm_bone.phys_pos_damping)
-
 			#ratio
 			if(arm_bone.phys_pos_ratio < 0):
 				damping.y *= 1.0 - abs(arm_bone.phys_pos_ratio)
 			elif (arm_bone.phys_pos_ratio > 0):
 				damping.x *= 1.0 - arm_bone.phys_pos_ratio
 			
-			var cb_scale := const_bone.scale
-			phys_pos.x = interpolate(2, damping.x, phys_pos.x, const_bone.pos.x, s, e)
-			phys_pos.y = interpolate(2, damping.y, phys_pos.y, const_bone.pos.y, s, e)
+			var cb_scale : Vector2 = const_bone.scale
+			arm_bone.phys_global_pos.x = interpolate(2, damping.x, arm_bone.phys_global_pos.x, const_bone.pos.x, s, e)
+			arm_bone.phys_global_pos.y = interpolate(2, damping.y, arm_bone.phys_global_pos.y, const_bone.pos.y, s, e)
 
 		#interpolate scale
 		if(arm_bone.phys_scale_damping > 0):
-			var phys_scale := arm_bone.phys_global_scale
 			var damping : Vector2 = Vector2(arm_bone.phys_scale_damping, arm_bone.phys_scale_damping)
 
 			#ratio
@@ -473,8 +474,8 @@ func simulate_physics(armature_bones : Array, constructed_bones: Array):
 				damping.x *= 1.0 - arm_bone.phys_scale_ratio
 
 			var cb_scale : Vector2 = const_bone.scale
-			phys_scale.x = interpolate(2, damping.x, phys_scale.x, cb_scale.x, s, e)
-			phys_scale.y = interpolate(2, damping.y, phys_scale.y, cb_scale.y, s, e)
+			arm_bone.phys_global_scale.x = interpolate(2, damping.x, arm_bone.phys_global_scale.x, cb_scale.x, s, e)
+			arm_bone.phys_global_scale.y = interpolate(2, damping.y, arm_bone.phys_global_scale.y, cb_scale.y, s, e)
 
 		#interpolate rotation
 		if(arm_bone.phys_rot_damping > 0):
@@ -482,34 +483,33 @@ func simulate_physics(armature_bones : Array, constructed_bones: Array):
 			arm_bone.phys_global_rot += rot / arm_bone.phys_rot_damping
 
 		#interpolate parent orbit (rot res, bounce, etc)
-		var parent: Bone = parent_map.get(const_bone.parent_id)
-				
+		var parent: Bone = parent_map.get(const_bone.parent_id, null)
+		
 		if(arm_bone.phys_sway > 0 && parent != null):
 		   #1. get the raw orbit angle between this bone and its parent
-			var diff := (const_bone.pos - parent.pos).normalized()
-			var diff_angle := atan2(diff.y, diff.x)
+			var diff : Vector2 = (const_bone.pos - parent.pos)
+			var diff_angle : float = atan2(diff.y, diff.x)
 
 			#2. interpolate current orbit angle to raw angle
-			var orbit_buffer := shortest_angle_delta(arm_bone.phys_global_orbit, diff_angle)
+			var orbit_buffer : float = shortest_angle_delta(arm_bone.phys_global_orbit, diff_angle)
 
 			#3. apply bounce to orbit angle
 			if(arm_bone.phys_rot_bounce > 0.0 && arm_bone.phys_rot_bounce <= 1.0):
 				orbit_buffer += arm_bone.phys_global_orbit_vel / (2.0 - arm_bone.phys_rot_bounce)
 				arm_bone.phys_global_orbit_vel = orbit_buffer
-			
 
 			#4. apply orbit buffer
 			arm_bone.phys_global_orbit += orbit_buffer / 10.0
 
 			#5. swing orbit based on position momentum
-			var vel := (arm_bone.phys_global_pos - prev_pos).normalized()
-			var angle := atan2(-vel.y, -vel.x)
-			var vel_rot := shortest_angle_delta(arm_bone.phys_global_orbit, angle)
-			var strength := (arm_bone.phys_global_pos - prev_pos).length() / 1000.0
+			var vel : Vector2 = (arm_bone.phys_global_pos - prev_pos)
+			var angle : float = atan2(-vel.y, -vel.x)
+			var vel_rot : float = shortest_angle_delta(arm_bone.phys_global_orbit, angle)
+			var strength : float = (arm_bone.phys_global_pos - prev_pos).length() / 1000.0
 			arm_bone.phys_global_orbit += vel_rot * strength * arm_bone.phys_sway
 
 			#6. apply difference in raw angle and orbit
-			arm_bone.phys_global_orbit_diff = diff_angle - arm_bone.phys_global_orbit
+			arm_bone.phys_global_orbit_diff = lerp(arm_bone.phys_global_orbit_diff, diff_angle - arm_bone.phys_global_orbit, 0.75)
 
 func inverse_kinematics(bones: Array, ik_root_ids: Array, option : ConstructOptions) -> Dictionary:
 	var ik_rots : Dictionary = {} 
@@ -597,18 +597,6 @@ func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
 		)
 		b.pos = (pos - root).rotated(base_angle) + root
 
-# ---------- Getters
-
-func get_prev_keyframe_value(keyframes: Array, bone_id: int, element: String, frame: int, default_val) -> Variant:
-	var prev = null
-	for kf in keyframes:
-		if kf.bone_id == bone_id and kf.element == element and kf.frame <= frame:
-			prev = kf
-			
-	if element == "Texture":
-		return prev.value_str if prev != null else default_val
-	return prev.value if prev != null else default_val
-
 # ---------- Interpolation
 
 func interpolate_value(current: int, max: int,start_val: float,end_val: float,start_handle: Vector2,end_handle: Vector2) -> float:
@@ -676,15 +664,26 @@ func check_bone_flip(bone: Bone, scale: Vector2):
 	if either && !both:
 		bone.rot = -bone.rot
 
-func check_hidden(bones: Array):
-	var map : Dictionary[int, Bone] = {}
-	for i in range(bones.size()):
-		if bones[i].hidden == 1.0:
-			map[bones[i].id] = bones[i]
+func propagate_visibility(bones: Array):
+	var by_id : Dictionary = {}
 
-	for i in range(bones.size()):
-		if bones[i].parent_id != -1 && map.get(bones[i].parent_id, null) != null:
-			bones[i].hidden = map[bones[i].parent_id].hidden
+	for bone in bones:
+		by_id[bone.id] = bone
+
+	for bone in bones:
+		var parent_id = bone.parent_id
+
+		while parent_id != -1:
+			var parent = by_id.get(parent_id)
+
+			if parent == null:
+				break
+
+			if parent.hidden == 1.0:
+				bone.hidden = 1.0
+				break
+
+			parent_id = parent.parent_id
 
 func point_bones(chain: Array) -> void:
 	if chain.is_empty():
@@ -802,10 +801,19 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 		var visib = bone_data.get('hidden', 0.0)
 		b.hidden = visib
 
+		var visib_init = bone_data.get('init_hidden', 0.0)
+		b.init_hidden = visib_init
+
 		b.ik_family_id = int(bone_data.get("ik_family_id", -1))
 		b.ik_mode = bone_data.get("ik_mode", "FABRIK")
 		b.ik_target_id = int(bone_data.get("ik_target_id", -1))
 		b.ik_constraint = bone_data.get("ik_constraint", "Clockwise")
+
+		b.phys_pos_damping = bone_data.get("phys_pos_damping", 0.0)
+		b.phys_sway = bone_data.get("phys_sway", 0.0)
+		b.phys_scale_damping = bone_data.get("phys_scale_damping", 0.0)
+		b.phys_rot_damping = bone_data.get("phys_rot_damping", 0.0)
+		b.phys_rot_bounce = bone_data.get("phys_rot_bounce", 0.0)
 
 		var ik_ids = bone_data.get("ik_bone_ids", [])
 		b.ik_bone_ids = ik_ids.duplicate(true)

@@ -182,7 +182,6 @@ anchor_right = 1.0
 grow_horizontal = 2
 
 [node name="Skellina" type="Node2D" parent="Skellinas" unique_id=1718233539]
-physics_interpolation_mode = 1
 position = Vector2(457, 175)
 script = ExtResource("1_t6lng")
 file = "res://example_models/_skellina.skf"
@@ -199,11 +198,10 @@ animations = Dictionary[String, ExtResource("3_7mckg")]({
 "Stand": SubResource("Resource_tysh6"),
 "Walk": SubResource("Resource_q6i3i")
 })
-smoothing = 0
+filter = false
 metadata/_custom_type_script = "uid://bttdudx216p8f"
 
 [node name="Skellina2" type="Node2D" parent="Skellinas" unique_id=1782924832]
-physics_interpolation_mode = 1
 position = Vector2(656, 175)
 script = ExtResource("1_t6lng")
 file = "res://example_models/_skellina.skf"
@@ -220,7 +218,7 @@ animations = Dictionary[String, ExtResource("3_7mckg")]({
 "Stand": SubResource("Resource_3hyav"),
 "Walk": SubResource("Resource_g2wh3")
 })
-smoothing = 0
+filter = false
 metadata/_custom_type_script = "uid://bttdudx216p8f"
 
 [node name="Skellingtons" type="Control" parent="." unique_id=227986465]
@@ -233,7 +231,6 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Skellington" type="Node2D" parent="Skellingtons" unique_id=1485292442]
-physics_interpolation_mode = 1
 position = Vector2(446, 149)
 script = ExtResource("1_t6lng")
 file = "res://example_models/_skellington.skf"
@@ -252,11 +249,10 @@ animations = Dictionary[String, ExtResource("3_7mckg")]({
 "Run ": SubResource("Resource_p6bqf"),
 "Stand": SubResource("Resource_3fh6t")
 })
-smoothing = 0
+filter = false
 metadata/_custom_type_script = "uid://bttdudx216p8f"
 
 [node name="Skellington2" type="Node2D" parent="Skellingtons" unique_id=257809078]
-physics_interpolation_mode = 1
 position = Vector2(633, 153)
 script = ExtResource("1_t6lng")
 file = "res://example_models/_skellington.skf"
@@ -275,7 +271,8 @@ animations = Dictionary[String, ExtResource("3_7mckg")]({
 "Run ": SubResource("Resource_bxaof"),
 "Stand": SubResource("Resource_nfxsj")
 })
-smoothing = 0
+frame_skip = 1
+filter = false
 metadata/_custom_type_script = "uid://bttdudx216p8f"
 
 [node name="HSeparator" type="HSeparator" parent="." unique_id=658453589]
