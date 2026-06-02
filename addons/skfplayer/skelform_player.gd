@@ -6,9 +6,9 @@ class_name SkelFormPlayer
 signal animation_finished
 var anim_finished_once : bool = false
 
-var backend : SkelformBackend = SkelformBackend.new()
-var armature : SkelformBackend.Armature
-var cached_bones: Array = []
+var runtime : SkelformRuntime = SkelformRuntime.new()
+var armature : SkelformRuntime.Armature
+var constructed_bones: Array = []
 var current_frame: int = 0
 var anim_length: int = 0
 var img_atlas  : Array = []
@@ -16,7 +16,7 @@ var text_atlases : Array = []
 var time_accum : float = 0.0
 var prev_frame : int = 0
 var frame_skip_count : int = 0
-var opts : SkelformBackend.ConstructOptions = SkelformBackend.ConstructOptions.new()
+var opts : SkelformRuntime.ConstructOptions = SkelformRuntime.ConstructOptions.new()
 
 @export_category("Setup")
 
@@ -100,7 +100,7 @@ func load_model_from_file(filename : String = ""):
 		printerr("File doesn't exist..")
 		return
 	
-	var dict = backend.load_armature_from_file(filename, opts)
+	var dict = runtime.load_armature_from_file(filename, opts)
 	armature = dict.arm
 	img_atlas = dict.img_at
 	
@@ -143,8 +143,8 @@ func init_animate():
 	if auto_play && !OS.has_feature("editor_hint"):
 		playing = true
 	current_frame = 0
-	backend.animate(armature.bones, [anim], [current_frame], [smoothing])
-	cached_bones = backend.construct(opts, armature)
+	runtime.animate(armature.bones, [anim], [current_frame], [smoothing])
+	constructed_bones = runtime.construct(opts, armature)
 	queue_redraw()
 	prev_frame = current_frame
 	frame_skip_count = 0
@@ -175,13 +175,13 @@ func animate(delta : float = 0.1):
 			if prev_frame == current_frame: return
 			if frame_skip_count < frame_skip: return
 
-			backend.animate(armature.bones, [anim], [current_frame], [smoothing])
-			cached_bones = backend.construct(opts, armature)
+			runtime.animate(armature.bones, [anim], [current_frame], [smoothing])
+			constructed_bones = runtime.construct(opts, armature)
 			queue_redraw()
 			prev_frame = current_frame
 			frame_skip_count = 0
 
-func get_animation_data(anim_name : String) -> SkelformBackend.AnimationData:
+func get_animation_data(anim_name : String) -> SkelformRuntime.AnimationData:
 	for i in armature.animations:
 		if i.name == anim_name:
 			return i
@@ -190,9 +190,9 @@ func get_animation_data(anim_name : String) -> SkelformBackend.AnimationData:
 #--- Drawing functions
 
 func _draw() -> void:
-	if cached_bones.is_empty():
+	if constructed_bones.is_empty():
 		return
-	draw_skeleton(cached_bones,armature.styles,text_atlases )
+	draw_skeleton(constructed_bones,armature.styles,text_atlases )
 
 func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 	if bones.is_empty():
@@ -207,12 +207,12 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 			return a.zindex < b.zindex
 		return order[a] < order[b])
 
-	var final_textures = setup_bone_textures(cached_bones, armature.styles)
+	var final_textures = setup_bone_textures(constructed_bones, armature.styles)
 	
 	for b in bones:
 		if not final_textures.has(b.id):
 			continue
-		var tex: SkelformBackend.TextureData = final_textures[b.id]
+		var tex: SkelformRuntime.TextureData = final_textures[b.id]
 		var atlas: Texture2D = atlases[tex.atlas_idx]
 		if atlas == null:
 			continue
@@ -359,16 +359,16 @@ func set_bones_data(bones : PackedStringArray, data_anme : String, data : Varian
 				l.set(data_anme, data)
 				continue
 
-func get_bone(bone : String) -> SkelformBackend.Bone:
+func get_bone(bone : String) -> SkelformRuntime.Bone:
 	for l in armature.bones:
 		if bone == l.name:
 			return l
 	return null
 
-func get_bone_data(bone : SkelformBackend.Bone, data_name : String) -> Variant:
+func get_bone_data(bone : SkelformRuntime.Bone, data_name : String) -> Variant:
 	return bone.get(data_name)
 
-func get_all_bone_data(bone : SkelformBackend.Bone) -> Dictionary:
+func get_all_bone_data(bone : SkelformRuntime.Bone) -> Dictionary:
 	var data : Dictionary = {}
 	data['name'] = bone.name
 	data['id'] = bone.id

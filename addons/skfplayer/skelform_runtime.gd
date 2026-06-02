@@ -1,6 +1,6 @@
 @tool
 extends Resource
-class_name SkelformBackend
+class_name SkelformRuntime
 
 # ---------- Classes
 
