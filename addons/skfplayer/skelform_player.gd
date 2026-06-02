@@ -3,8 +3,10 @@
 extends Node2D
 class_name SkelFormPlayer
 
+signal animation_finished
+var anim_finished_once : bool = false
 
-@export var backend : SkelformBackend
+var backend : SkelformBackend = SkelformBackend.new()
 var armature : SkelformBackend.Armature
 var cached_bones: Array = []
 var current_frame: int = 0
@@ -86,11 +88,7 @@ func _ready():
 	opts.fabrik_iterations = fabrik_iterations
 	opts.propagate_visibility = propagate_visibility
 
-	if !OS.has_feature("editor"):
-		if auto_play: 
-			playing = true
-		else:
-			playing = false
+	init_animate()
 	
 	set_physics_process(playing)
 
@@ -115,6 +113,7 @@ func load_model_from_file(filename : String = ""):
 	
 	for i in armature.animations:
 		var anim_res : SkelformAnimationRes = SkelformAnimationRes.new()
+		anim_res.resource_local_to_scene = true
 		anim_res.anim_name = i.name
 		anim_res.fps = i.fps
 		animations[i.name] = anim_res
@@ -145,7 +144,7 @@ func init_animate():
 		playing = true
 	current_frame = 0
 	backend.animate(armature.bones, [anim], [current_frame], [smoothing])
-	cached_bones = backend.construct(anim, current_frame, opts, armature)
+	cached_bones = backend.construct(opts, armature)
 	queue_redraw()
 	prev_frame = current_frame
 	frame_skip_count = 0
@@ -156,7 +155,7 @@ func animate(delta : float = 0.1):
 	var arm_exists : bool = !armature or armature.animations.is_empty()
 
 	if arm_exists: return
-
+	
 	for an in animations.values():
 		if an.playing:
 			var anim = get_animation_data(an.anim_name)
@@ -164,7 +163,12 @@ func animate(delta : float = 0.1):
 			time_accum += delta
 
 			if anim_length == 0: return
-			if (current_frame > (anim_length -frame_skip)) && !looping: return
+			if (current_frame > (anim_length - frame_skip)):
+				if !anim_finished_once:
+					animation_finished.emit(an.anim_name)
+					
+				if !looping:
+					return
 
 			current_frame = int(time_accum * an.fps) % anim_length
 			
@@ -172,7 +176,7 @@ func animate(delta : float = 0.1):
 			if frame_skip_count < frame_skip: return
 
 			backend.animate(armature.bones, [anim], [current_frame], [smoothing])
-			cached_bones = backend.construct(anim, current_frame, opts, armature)
+			cached_bones = backend.construct(opts, armature)
 			queue_redraw()
 			prev_frame = current_frame
 			frame_skip_count = 0
@@ -320,13 +324,25 @@ func get_animation_names(working_only : bool = false) -> PackedStringArray:
 	return arr
 
 func disable_all_animation():
+	anim_finished_once = false
+	current_frame = 0
+	prev_frame = 0
+	time_accum = 0
 	for i in animations.keys():
 		animations[i].playing = false
 
 func set_animation(anim : String, play : bool):
+	anim_finished_once = false
+	current_frame = 0
+	prev_frame = 0
+	time_accum = 0
 	animations[anim].playing = play
 
 func set_animations(anims : PackedStringArray, play : bool):
+	anim_finished_once = false
+	current_frame = 0
+	prev_frame = 0
+	time_accum = 0
 	for i in anims:
 		animations[i].playing = play
 
