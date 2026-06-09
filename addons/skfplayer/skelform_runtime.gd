@@ -273,22 +273,24 @@ func reset_bones(bones, animations, frame, smoothFrame):
 			var reset = element_map[bone.id]
 
 			if "PositionX" not in reset:
-				bone.pos.x = lerp(bone.pos.x, bone.init_pos.x, 1.0)
+				bone.pos.x = interpolate(frame, smoothFrame, bone.pos.x, bone.init_pos.x, z, z)
 			if "PositionY" not in reset:
-				bone.pos.y = lerp(bone.pos.y, bone.init_pos.y, 1.0)
+				bone.pos.y = interpolate(frame, smoothFrame, bone.pos.y, bone.init_pos.y, z, z)
 			if "Rotation" not in reset:
-				bone.rot = lerp(bone.rot, bone.init_rot, 1.0)
+				bone.rot = interpolate(frame, smoothFrame, bone.rot, bone.init_rot, z, z)
 			if "ScaleX" not in reset:
-				bone.scale.x = lerp(bone.scale.x, bone.init_scale.x, 1.0)
+				bone.scale.x = interpolate(frame, smoothFrame, bone.scale.x, bone.init_scale.x, z, z)
 			if "ScaleY" not in reset:
-				bone.scale.y = lerp(bone.scale.y, bone.init_scale.y, 1.0)
+				bone.scale.y = interpolate(frame, smoothFrame, bone.scale.y, bone.init_scale.y, z, z)
 			if "Hidden" not in reset:
 				bone.hidden = bone.init_hidden
 		
 		else:
-			bone.pos = bone.pos.lerp(bone.init_pos, 1.0)
-			bone.rot = lerp(bone.rot, bone.init_rot, 1.0)
-			bone.scale = bone.scale.lerp(bone.init_scale, 1.0)
+			bone.pos.x = interpolate(frame, smoothFrame, bone.pos.x, bone.init_pos.x, z, z)
+			bone.pos.y = interpolate(frame, smoothFrame, bone.pos.y, bone.init_pos.y, z, z)
+			bone.rot = interpolate(frame, smoothFrame, bone.rot, bone.init_rot, z, z)
+			bone.scale.x = interpolate(frame, smoothFrame, bone.scale.x, bone.init_scale.x, z, z)
+			bone.scale.y = interpolate(frame, smoothFrame, bone.scale.y, bone.init_scale.y, z, z)
 			bone.hidden = bone.init_hidden
 
 func construct(options: ConstructOptions, armature : Armature, delta : float) -> Array:

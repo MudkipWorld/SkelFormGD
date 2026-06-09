@@ -118,6 +118,7 @@ func load_model_from_file(filename : String = ""):
 		model_styles.clear()
 		for st in armature.styles:
 			var new_res : SKFStylesRes = SKFStylesRes.new()
+			new_res.resource_local_to_scene = true
 			new_res.style_name = st.name
 			for i in st.textures:
 				new_res.textures.append(i.name)
@@ -377,11 +378,13 @@ func get_bone_names() -> PackedStringArray:
 	return arr
 
 func set_bones_data(bones : PackedStringArray, data_anme : String, data : Variant):
-	for i in bones:
-		for l in armature.bones:
-			if i == l.name:
-				l.set(data_anme, data)
-				continue
+	if armature.constructed_by_id.has(runtime.get_instance_id()):
+		var c_b = armature.constructed_by_id[runtime.get_instance_id()]
+		for i in bones:
+			for l in c_b:
+				if i == l.name:
+					l.set(data_anme, data)
+					continue
 
 func get_bone(bone : String) -> SkelformRuntime.Bone:
 	for l in armature.bones:
