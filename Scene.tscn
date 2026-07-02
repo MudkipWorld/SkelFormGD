@@ -1,6 +1,171 @@
 [gd_scene format=3 uid="uid://b88xkmris26bs"]
 
 [ext_resource type="Script" uid="uid://bttdudx216p8f" path="res://addons/skfplayer/skelform_player.gd" id="1_t6lng"]
+[ext_resource type="Script" uid="uid://fwv1xo7p1pyn" path="res://addons/skfplayer/Resources/skf_styles_res.gd" id="2_j2eoc"]
+[ext_resource type="Script" uid="uid://cajw2nvjfv7fk" path="res://addons/skfplayer/Resources/skf_anim_res.gd" id="3_7mckg"]
+
+[sub_resource type="Resource" id="Resource_dob7g"]
+script = ExtResource("2_j2eoc")
+style_name = "Default"
+textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Skull", "Left Eye", "Right Eye", "Right Wing", "Left Wing", "Dot", "Crown", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Princess Dress", "Bowtie", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand"]
+
+[sub_resource type="Resource" id="Resource_eort7"]
+script = ExtResource("2_j2eoc")
+style_name = "Princess Skella Crown"
+textures = ["Bigtie", "Crown"]
+
+[sub_resource type="Resource" id="Resource_66br4"]
+script = ExtResource("2_j2eoc")
+style_name = "Princess_Skella_Dress"
+textures = ["Bowtie", "Texture", "Princess Dress"]
+
+[sub_resource type="Resource" id="Resource_rjlwc"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Sitting"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_tysh6"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Stand"
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_q6i3i"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Walk"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_xcudr"]
+script = ExtResource("2_j2eoc")
+style_name = "Default"
+textures = ["Right Shoulder Pad", "Right Shoulder", "Right Forearm", "Right Hand", "Neck", "Skull", "Left Eye", "Right Eye", "Right Wing", "Left Wing", "Dot", "Crown", "Right Leg", "Right Knee", "Right Shoe", "Left Leg", "Left Knee", "Left Shoe", "Dress", "Princess Dress", "Bowtie", "Left Shoulder Pad", "Left Shoulder", "Left Forearm", "Left Hand"]
+
+[sub_resource type="Resource" id="Resource_7mckg"]
+script = ExtResource("2_j2eoc")
+style_name = "Princess Skella Crown"
+visible = false
+textures = ["Bigtie", "Crown"]
+
+[sub_resource type="Resource" id="Resource_j2eoc"]
+script = ExtResource("2_j2eoc")
+style_name = "Princess_Skella_Dress"
+visible = false
+textures = ["Bowtie", "Texture", "Princess Dress"]
+
+[sub_resource type="Resource" id="Resource_567bu"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Sitting"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_3hyav"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Stand"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_g2wh3"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Walk"
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_afkpi"]
+script = ExtResource("2_j2eoc")
+style_name = "Default"
+textures = ["Right Shoulder", "Right Wrist", "Right Hand", "Suit_Backsliver", "Right Leg", "Right Shoe", "BackCollar", "Neck", "Skull", "Right Eye", "Left Eye", "Hat", "Torso", "Collar", "Bowtie", "Skelson Hat"]
+
+[sub_resource type="Resource" id="Resource_qqsh0"]
+script = ExtResource("2_j2eoc")
+style_name = "Skelson Coat"
+textures = ["Torso", "Collar", "Bowtie", "Suit_Backsliver", "Right Shoulder"]
+
+[sub_resource type="Resource" id="Resource_2lf55"]
+script = ExtResource("2_j2eoc")
+style_name = "Skelson Hat"
+textures = ["Skelson Hat", "Hat"]
+
+[sub_resource type="Resource" id="Resource_k2vra"]
+script = ExtResource("2_j2eoc")
+style_name = "Skelson Pants"
+textures = ["Right Leg"]
+
+[sub_resource type="Resource" id="Resource_fidkn"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Jump"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_y5tvv"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Land"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_p6bqf"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Run "
+fps = 60
+
+[sub_resource type="Resource" id="Resource_3fh6t"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Stand"
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_2k4sf"]
+script = ExtResource("2_j2eoc")
+style_name = "Default"
+textures = ["Right Shoulder", "Right Wrist", "Right Hand", "Suit_Backsliver", "Right Leg", "Right Shoe", "BackCollar", "Neck", "Skull", "Right Eye", "Left Eye", "Hat", "Torso", "Collar", "Bowtie", "Skelson Hat"]
+
+[sub_resource type="Resource" id="Resource_wj8qm"]
+script = ExtResource("2_j2eoc")
+style_name = "Skelson Coat"
+visible = false
+textures = ["Torso", "Collar", "Bowtie", "Suit_Backsliver", "Right Shoulder"]
+
+[sub_resource type="Resource" id="Resource_hvxgu"]
+script = ExtResource("2_j2eoc")
+style_name = "Skelson Hat"
+visible = false
+textures = ["Skelson Hat", "Hat"]
+
+[sub_resource type="Resource" id="Resource_hwsed"]
+script = ExtResource("2_j2eoc")
+style_name = "Skelson Pants"
+visible = false
+textures = ["Right Leg"]
+
+[sub_resource type="Resource" id="Resource_ldgsc"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Jump"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_hxa8q"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Land"
+fps = 60
+
+[sub_resource type="Resource" id="Resource_bxaof"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Run "
+fps = 60
+playing = true
+
+[sub_resource type="Resource" id="Resource_nfxsj"]
+resource_local_to_scene = true
+script = ExtResource("3_7mckg")
+anim_name = "Stand"
+fps = 60
 
 [node name="Scene" type="Control" unique_id=673839568]
 layout_mode = 3
@@ -10,112 +175,51 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Processed" type="Label" parent="." unique_id=1637415227]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 35.0
-grow_horizontal = 2
-text = "Processed At Runtime"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Baked" type="Label" parent="." unique_id=726068681]
-layout_mode = 1
-anchors_preset = 14
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_top = -18.0
-offset_bottom = 15.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "Cached/ Baked"
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="Skellinas" type="Control" parent="." unique_id=167301956]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 grow_horizontal = 2
 
-[node name="Skellina" type="Node2D" parent="Skellinas" unique_id=1227293270]
-physics_interpolation_mode = 1
-position = Vector2(96, 198)
+[node name="Skellina" type="Node2D" parent="Skellinas" unique_id=1718233539]
+position = Vector2(457, 175)
 script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
-auto_play = true
-looping = true
-fps = 60
-frame_skip = 3
+file = "res://example_models/_skellina.skf"
 model_scale = Vector2(0.08, 0.08)
-cache_model = true
+model_styles = Dictionary[String, ExtResource("2_j2eoc")]({
+"Default": SubResource("Resource_dob7g"),
+"Princess Skella Crown": SubResource("Resource_eort7"),
+"Princess_Skella_Dress": SubResource("Resource_66br4")
+})
+playing = true
+looping = true
+animations = Dictionary[String, ExtResource("3_7mckg")]({
+"Sitting": SubResource("Resource_rjlwc"),
+"Stand": SubResource("Resource_tysh6"),
+"Walk": SubResource("Resource_q6i3i")
+})
+filter = false
+metadata/_custom_type_script = "uid://bttdudx216p8f"
 
-[node name="Skellina2" type="Node2D" parent="Skellinas" unique_id=460568199]
-physics_interpolation_mode = 1
-position = Vector2(293, 195)
+[node name="Skellina2" type="Node2D" parent="Skellinas" unique_id=1782924832]
+position = Vector2(656, 175)
 script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
-auto_play = true
-looping = true
-fps = 60
-frame_skip = 3
-animation_index = 1
+file = "res://example_models/_skellina.skf"
 model_scale = Vector2(0.08, 0.08)
-cache_model = true
-
-[node name="Skellina3" type="Node2D" parent="Skellinas" unique_id=547138676]
-physics_interpolation_mode = 1
-position = Vector2(484, 198)
-script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
-auto_play = true
+model_styles = Dictionary[String, ExtResource("2_j2eoc")]({
+"Default": SubResource("Resource_xcudr"),
+"Princess Skella Crown": SubResource("Resource_7mckg"),
+"Princess_Skella_Dress": SubResource("Resource_j2eoc")
+})
+playing = true
 looping = true
-fps = 60
-frame_skip = 3
-animation_index = 2
-model_scale = Vector2(0.08, 0.08)
-cache_model = true
-
-[node name="Skellina4" type="Node2D" parent="Skellinas" unique_id=1002689137]
-physics_interpolation_mode = 1
-position = Vector2(681, 195)
-script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
-auto_play = true
-looping = true
-fps = 60
-frame_skip = 3
-model_scale = Vector2(0.08, 0.08)
-cache_model = true
-
-[node name="Skellina5" type="Node2D" parent="Skellinas" unique_id=339043425]
-physics_interpolation_mode = 1
-position = Vector2(844, 198)
-script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
-auto_play = true
-looping = true
-fps = 60
-frame_skip = 3
-animation_index = 1
-model_scale = Vector2(0.08, 0.08)
-cache_model = true
-
-[node name="Skellina6" type="Node2D" parent="Skellinas" unique_id=459308605]
-physics_interpolation_mode = 1
-position = Vector2(1041, 195)
-script = ExtResource("1_t6lng")
-file = "res://_skellina.skf"
-auto_play = true
-looping = true
-fps = 60
-frame_skip = 3
-animation_index = 2
-model_scale = Vector2(0.08, 0.08)
-debug = true
-cache_model = true
+animations = Dictionary[String, ExtResource("3_7mckg")]({
+"Sitting": SubResource("Resource_567bu"),
+"Stand": SubResource("Resource_3hyav"),
+"Walk": SubResource("Resource_g2wh3")
+})
+filter = false
+metadata/_custom_type_script = "uid://bttdudx216p8f"
 
 [node name="Skellingtons" type="Control" parent="." unique_id=227986465]
 layout_mode = 1
@@ -126,86 +230,50 @@ anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Skellington" type="Node2D" parent="Skellingtons" unique_id=680816443]
-physics_interpolation_mode = 1
-position = Vector2(102, 172)
+[node name="Skellington" type="Node2D" parent="Skellingtons" unique_id=1485292442]
+position = Vector2(446, 149)
 script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
-auto_play = true
-looping = true
-fps = 60
-frame_skip = 3
-animation_index = 1
+file = "res://example_models/_skellington.skf"
 model_scale = Vector2(0.08, 0.08)
-fabrik_iterations = 16
-model_style = 1
+model_styles = Dictionary[String, ExtResource("2_j2eoc")]({
+"Default": SubResource("Resource_afkpi"),
+"Skelson Coat": SubResource("Resource_qqsh0"),
+"Skelson Hat": SubResource("Resource_2lf55"),
+"Skelson Pants": SubResource("Resource_k2vra")
+})
+playing = true
+looping = true
+animations = Dictionary[String, ExtResource("3_7mckg")]({
+"Jump": SubResource("Resource_fidkn"),
+"Land": SubResource("Resource_y5tvv"),
+"Run ": SubResource("Resource_p6bqf"),
+"Stand": SubResource("Resource_3fh6t")
+})
+filter = false
+metadata/_custom_type_script = "uid://bttdudx216p8f"
 
-[node name="Skellington2" type="Node2D" parent="Skellingtons" unique_id=1618866112]
-physics_interpolation_mode = 1
-position = Vector2(299, 172)
+[node name="Skellington2" type="Node2D" parent="Skellingtons" unique_id=257809078]
+position = Vector2(633, 153)
 script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
-auto_play = true
-looping = true
-fps = 60
-frame_skip = 3
+file = "res://example_models/_skellington.skf"
 model_scale = Vector2(0.08, 0.08)
-fabrik_iterations = 14
-model_style = 1
-
-[node name="Skellington3" type="Node2D" parent="Skellingtons" unique_id=1385546126]
-physics_interpolation_mode = 1
-position = Vector2(490, 172)
-script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
-auto_play = true
+model_styles = Dictionary[String, ExtResource("2_j2eoc")]({
+"Default": SubResource("Resource_2k4sf"),
+"Skelson Coat": SubResource("Resource_wj8qm"),
+"Skelson Hat": SubResource("Resource_hvxgu"),
+"Skelson Pants": SubResource("Resource_hwsed")
+})
+playing = true
 looping = true
-fps = 60
-frame_skip = 3
-animation_index = 1
-model_scale = Vector2(0.08, 0.08)
-fabrik_iterations = 12
-model_style = 1
-
-[node name="Skellington4" type="Node2D" parent="Skellingtons" unique_id=786793741]
-physics_interpolation_mode = 1
-position = Vector2(687, 172)
-script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
-auto_play = true
-looping = true
-fps = 60
-frame_skip = 3
-model_scale = Vector2(0.08, 0.08)
-model_style = 1
-
-[node name="Skellington5" type="Node2D" parent="Skellingtons" unique_id=1964563637]
-physics_interpolation_mode = 1
-position = Vector2(850, 172)
-script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
-auto_play = true
-looping = true
-fps = 60
-frame_skip = 3
-animation_index = 1
-model_scale = Vector2(0.08, 0.08)
-fabrik_iterations = 8
-model_style = 1
-debug = true
-
-[node name="Skellington6" type="Node2D" parent="Skellingtons" unique_id=164820353]
-physics_interpolation_mode = 1
-position = Vector2(1047, 172)
-script = ExtResource("1_t6lng")
-file = "res://_skellington.skf"
-auto_play = true
-looping = true
-fps = 60
-frame_skip = 3
-model_scale = Vector2(0.08, 0.08)
-fabrik_iterations = 6
-model_style = 1
+animations = Dictionary[String, ExtResource("3_7mckg")]({
+"Jump": SubResource("Resource_ldgsc"),
+"Land": SubResource("Resource_hxa8q"),
+"Run ": SubResource("Resource_bxaof"),
+"Stand": SubResource("Resource_nfxsj")
+})
+frame_skip = 1
+filter = false
+metadata/_custom_type_script = "uid://bttdudx216p8f"
 
 [node name="HSeparator" type="HSeparator" parent="." unique_id=658453589]
 layout_mode = 1

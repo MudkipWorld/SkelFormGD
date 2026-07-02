@@ -24,6 +24,7 @@ config/icon="uid://cf2oacln8jpuo"
 [display]
 
 window/stretch/mode="canvas_items"
+window/vsync/vsync_mode=2
 
 [dotnet]
 
@@ -32,6 +33,10 @@ project/assembly_name="SkelFormAddon"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/skfplayer/plugin.cfg")
+
+[physics]
+
+2d/run_on_separate_thread=true
 
 [rendering]
 
