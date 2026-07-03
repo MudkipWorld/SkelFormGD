@@ -286,7 +286,7 @@ func batch_sprite(batch: Dictionary, bone, visual, tex, atlas: Texture2D) -> voi
 	var final_scale = bone.scale * visual.pivot_scale
 	
 	var pivot = visual.pivot_pos * tex.size
-	pivot = runtime.rotate_vec2(pivot, -visual.pivot_rot * dir)
+	pivot = SkelformUtils.rotate_vec2(pivot, -visual.pivot_rot * dir)
 	pivot *= final_scale
 	pivot.y = -pivot.y
 	
