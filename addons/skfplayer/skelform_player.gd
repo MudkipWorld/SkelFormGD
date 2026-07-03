@@ -71,8 +71,6 @@ var opts : SkelformRuntime.ConstructOptions = SkelformRuntime.ConstructOptions.n
 		propagate_visibility = new_pv
 		opts.propagate_visibility = new_pv
 
-@export var filter : bool = true
-
 #--- Basic player setup
 
 func _ready():
@@ -140,7 +138,7 @@ func init_animate():
 	if auto_play && !OS.has_feature("editor_hint"):
 		playing = true
 	current_frame = 0
-	runtime.animate(armature.bones, [anim], [current_frame], [smoothing])
+	runtime.animate(armature, [anim], [current_frame], [smoothing])
 	constructed_bones = runtime.construct(opts, armature, 0.16)
 	queue_redraw()
 	prev_frame = current_frame
@@ -149,9 +147,9 @@ func init_animate():
 func animate(delta : float):
 	if !is_visible_in_tree() : return
 	frame_skip_count += 1
-	var arm_exists : bool = !armature or armature.animations.is_empty()
+	var arm_exists : bool = armature != null && is_instance_valid(armature)
 
-	if arm_exists: return
+	if !arm_exists: return
 	
 	for an in animations.values():
 		if an.playing:
@@ -172,7 +170,7 @@ func animate(delta : float):
 			if prev_frame == current_frame: return
 			if frame_skip_count < frame_skip: return
 
-			runtime.animate(armature.bones, [anim], [current_frame], [smoothing])
+			runtime.animate(armature, [anim], [current_frame], [smoothing])
 			constructed_bones = runtime.construct(opts, armature, delta)
 			queue_redraw()
 			prev_frame = current_frame
@@ -185,39 +183,70 @@ func get_animation_data(anim_name : String) -> SkelformRuntime.AnimationData:
 	return null
 
 #--- Drawing functions
-
 func _draw() -> void:
 	if constructed_bones.is_empty():
 		return
-	draw_skeleton(constructed_bones,armature.styles,text_atlases )
+	draw_skeleton(constructed_bones, armature.visuals, text_atlases, armature.styles)
 
-func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
+func draw_skeleton(bones: Array, visuals: Array, atlases: Array, styles: Array) -> void:
 	if bones.is_empty():
 		return
 
-	var order : Dictionary = {}
-	for i in bones.size():
-		order[bones[i]] = i
+	var order = {}
+	for n in range(bones.size()):
+		order[bones[n]] = n
+	
+	for n in range(bones.size()):
+		order[bones[n]] = n
 
 	bones.sort_custom(func(a, b):
-		if a.zindex != b.zindex:
-			return a.zindex < b.zindex
-		return order[a] < order[b]
+		var a_has = a.visuals_id != -1
+		var b_has = b.visuals_id != -1
+
+		if a_has != b_has:
+			return a_has
+
+		if !a_has:
+			return a.id < b.id
+
+		var va = visuals[a.visuals_id]
+		var vb = visuals[b.visuals_id]
+
+		if va.zindex != vb.zindex:
+			return va.zindex < vb.zindex
+
+		return a.id < b.id
 	)
 
-	var final_textures = setup_bone_textures(armature.bones, armature.styles)
+	var atlas_batches = {}
 
-	var atlas_batches := {}
+	var hidden_cache = {}
+	var bones_by_id = bones.duplicate()
+	bones_by_id.sort_custom(func(a, b): return a.id < b.id)
+	
+	for bone in bones_by_id:
+		var hidden = bone.hidden
+		if bone.parent_id != -1:
+			hidden = hidden or hidden_cache.get(bone.parent_id, false)
+		hidden_cache[bone.id] = hidden
 
-	for b in bones:
-		if b.hidden == 1.0:
+	for bone in bones:
+		if bone.visuals_id == -1:
 			continue
 
-		var tex = final_textures.get(b.id)
+		if hidden_cache.get(bone.id, false):
+			continue
+
+		var visual = visuals[bone.visuals_id]
+
+		var tex = get_bone_texture(visual.tex, styles)
 		if tex == null:
 			continue
 
 		var atlas_idx = tex.atlas_idx
+		if atlas_idx < 0 or atlas_idx >= atlases.size():
+			continue
+
 		var atlas = atlases[atlas_idx]
 		if atlas == null:
 			continue
@@ -230,10 +259,10 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 				indices = PackedInt32Array()
 			}
 
-		if b.vertices.is_empty():
-			batch_sprite(atlas_batches[atlas_idx], b, tex, atlas)
+		if visual.vertices.is_empty():
+			batch_sprite(atlas_batches[atlas_idx], bone, visual, tex, atlas)
 		else:
-			batch_mesh(atlas_batches[atlas_idx], b, tex, atlas)
+			batch_mesh(atlas_batches[atlas_idx], bone, visual, tex, atlas)
 
 	for atlas_idx in atlas_batches:
 		var batch = atlas_batches[atlas_idx]
@@ -248,93 +277,88 @@ func draw_skeleton(bones: Array, styles: Array, atlases: Array) -> void:
 			atlases[atlas_idx].get_rid()
 		)
 
-func batch_sprite(batch: Dictionary, b, tex, atlas: Texture2D) -> void:
-	var v = batch.verts
-	var u = batch.uvs
-	var c = batch.colors
-	var i = batch.indices
+func batch_sprite(batch: Dictionary, bone, visual, tex, atlas: Texture2D) -> void:
+	var start = batch.verts.size()
 
-	var start = v.size()
+	var dir := -1.0 if bone.scale.x < 0.0 else 1.0
 
-	var size = tex.size * b.scale
-	var h = size * 0.5
+	var final_rot = bone.rot - visual.pivot_rot * dir
+	var final_scale = bone.scale * visual.pivot_scale
+	
+	var pivot = visual.pivot_pos * tex.size
+	pivot = runtime.rotate_vec2(pivot, -visual.pivot_rot * dir)
+	pivot *= final_scale
+	pivot.y = -pivot.y
+	
+	var center = bone.pos
+	var half = tex.size * bone.scale * 0.5
 
-	var cos_r = cos(b.rot)
-	var sin_r = sin(b.rot)
+	var c : float = cos(final_rot)
+	var s : float = sin(final_rot)
 
-	var p0 = transform_point(Vector2(-h.x, -h.y), b.pos, cos_r, sin_r)
-	var p1 = transform_point(Vector2( h.x, -h.y), b.pos, cos_r, sin_r)
-	var p2 = transform_point(Vector2( h.x,  h.y), b.pos, cos_r, sin_r)
-	var p3 = transform_point(Vector2(-h.x,  h.y), b.pos, cos_r, sin_r)
+	batch.verts.append(transform_point(Vector2(-half.x, -half.y) + pivot , center , c, s))
+	batch.verts.append(transform_point(Vector2( half.x, -half.y) +  pivot , center , c, s))
+	batch.verts.append(transform_point(Vector2( half.x,  half.y) +  pivot , center , c, s))
+	batch.verts.append(transform_point(Vector2(-half.x,  half.y) +  pivot , center , c, s))
 
-	v.append_array([p0, p1, p2, p3])
-	c.append_array([b.tint, b.tint, b.tint, b.tint])
+	batch.colors.append_array([
+		bone.tint,
+		bone.tint,
+		bone.tint,
+		bone.tint
+	])
 
-	var atlas_size = Vector2(atlas.get_width(), atlas.get_height())
+	var atlas_size := Vector2(atlas.get_width(), atlas.get_height())
 
-	var uv0 = tex.offset / atlas_size
-	var uv1 = (tex.offset + Vector2(tex.size.x, 0)) / atlas_size
-	var uv2 = (tex.offset + tex.size) / atlas_size
-	var uv3 = (tex.offset + Vector2(0, tex.size.y)) / atlas_size
+	batch.uvs.append(tex.offset / atlas_size)
+	batch.uvs.append((tex.offset + Vector2(tex.size.x, 0.0)) / atlas_size)
+	batch.uvs.append((tex.offset + tex.size) / atlas_size)
+	batch.uvs.append((tex.offset + Vector2(0.0, tex.size.y)) / atlas_size)
 
-	u.append_array([uv0, uv1, uv2, uv3])
-
-	i.append_array([
+	batch.indices.append_array([
 		start + 0, start + 1, start + 2,
 		start + 0, start + 2, start + 3
 	])
 
-func batch_mesh(batch: Dictionary, bone, tex, atlas: Texture2D) -> void:
-	var v = batch.verts
-	var u = batch.uvs
-	var c = batch.colors
-	var i = batch.indices
+func batch_mesh(batch: Dictionary, bone, visual, tex, atlas: Texture2D) -> void:
+	var start = batch.verts.size()
 
-	var start = v.size()
-
-	var atlas_size = Vector2(atlas.get_width(), atlas.get_height())
+	var atlas_size := Vector2(atlas.get_width(), atlas.get_height())
 	var uv_offset = tex.offset / atlas_size
 	var uv_scale = tex.size / atlas_size
 
-	for vert in bone.vertices:
-		v.append(vert.pos)
-		u.append(uv_offset + vert.uv * uv_scale)
-		c.append(bone.tint)
+	for vert in visual.vertices:
+		batch.verts.append(vert.pos)
+		batch.uvs.append(uv_offset + vert.uv * uv_scale)
+		batch.colors.append(visual.tint)
 
-	var src = bone.indices if bone.indices.size() > 0 else bone.triangles
+	var src: PackedInt32Array = visual.indices
+	if src.is_empty():
+		src = PackedInt32Array(visual.triangles)
 
 	for idx in src:
-		i.append(start + idx)
+		batch.indices.append(start + idx)
 
 func transform_point(p: Vector2, pos: Vector2, cos_r: float, sin_r: float) -> Vector2:
-	return Vector2(p.x * cos_r - p.y * sin_r,p.x * sin_r + p.y * cos_r) + pos
+	return Vector2(p.x * cos_r - p.y * sin_r, p.x * sin_r + p.y * cos_r) + pos
 
-func setup_bone_textures(bones: Array, styles: Array) -> Dictionary:
-	var result := {}
-	if bones.is_empty() or styles.is_empty():
-		return result
+func get_bone_texture(tex_name: String, styles: Array):
+	var visible_style_names = []
 
-	var visible_style_names := []
-	for st_name in model_styles.keys():
-		var res = model_styles[st_name] as SKFStylesRes
-		if res && res.visible:
+	for style_name in model_styles:
+		var res: SKFStylesRes = model_styles[style_name]
+		if res and res.visible:
 			visible_style_names.append(res.style_name)
 
-	for b in bones:
-		var tex_assigned := false
-		for st in styles:
-			if st.name not in visible_style_names:
-				continue 
+	for style in styles:
+		if style.name not in visible_style_names:
+			continue
 
-			for tex in st.textures:
-				if tex.name == b.tex:
-					result[b.id] = tex 
-					tex_assigned = true
-					break
-			if tex_assigned:
-				break
+		for tex in style.textures:
+			if tex.name == tex_name:
+				return tex
 
-	return result
+	return null
 
 #--- Sets and gets for bones and animations for more control
 
