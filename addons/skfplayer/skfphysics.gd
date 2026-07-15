@@ -64,7 +64,7 @@ static func inherit_vert(pos : Vector2, bone : SkelformRuntime.Bone):
 	pos += bone.pos
 	return pos
 
-static func apply_constraints(chain: Array, family: Dictionary, root: Vector2, target: Vector2) -> void:
+static func apply_constraints(chain: Array, family: SkelformRuntime.InverseKinematics, root: Vector2, target: Vector2) -> void:
 	if chain.size() < 2:
 		return
 

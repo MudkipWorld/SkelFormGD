@@ -42,12 +42,7 @@ class Bone:
 	var visuals_id : int = -1
 	var physics_id : int = -1
 	var inverse_kinematics_id : int = -1
-	
-	var ik_bone_ids: Array
-	var ik_mode: String
-	var ik_constraint: String
-	var ik_family_id: int
-	var ik_target_id: int
+	var ik_family_id : int = -1
 	
 	var init_rot: float
 	var init_scale: Vector2
@@ -83,7 +78,6 @@ class Bone:
 		id = _id
 		parent_id = _parent_id
 		style_ids = []
-		ik_bone_ids = []
 		scale = Vector2.ONE
 		pos = Vector2.ZERO
 		init_scale = Vector2.ONE
@@ -107,12 +101,8 @@ class Bone:
 		b.visuals_id = visuals_id
 		b.physics_id = physics_id
 		b.inverse_kinematics_id  = inverse_kinematics_id
-		
-		b.ik_bone_ids = ik_bone_ids.duplicate(true)
-		b.ik_mode = ik_mode
-		b.ik_constraint = ik_constraint
 		b.ik_family_id = ik_family_id
-		b.ik_target_id = ik_target_id
+		
 		b.init_rot = init_rot
 		b.init_scale = init_scale
 		b.init_pos = init_pos
@@ -197,12 +187,23 @@ class Atlas:
 	var filename: String
 	var size: Vector2
 
+class InverseKinematics:
+	var family_id : int 
+	var constraint : String
+	var init_constraint : String
+	var mode : String
+	var init_mode : String
+	var target_id : int
+	var bone_ids : Array
+	var mimic_target : bool = false
+	var init_mimic_target : bool = false
+
 class Armature:
 	var bones: Array
 	
 	var constructed_by_id : Dictionary[int, Array]
 	var physics : Array
-	var inverse_kinematics : Array
+	var inverse_kinematics : Array[InverseKinematics]
 	var visuals : Array
 	var constructed_bones : Array
 	var ik_root_ids: Array
@@ -553,17 +554,11 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 		b.visuals_id = bone_data.get('visuals_id',-1)
 		b.physics_id = bone_data.get('physics_id', -1)
 		b.inverse_kinematics_id = bone_data.get('inverse_kinematics_id', -1)
+		b.ik_family_id = int(bone_data.get("family_id", -1))
 
 		var visib_init = bone_data.get('init_hidden', 0.0)
 		b.init_hidden = visib_init
 
-		b.ik_family_id = int(bone_data.get("family_id", -1))
-		b.ik_mode = bone_data.get("mode", "FABRIK")
-		b.ik_target_id = int(bone_data.get("target_id", -1))
-		b.ik_constraint = bone_data.get("constraint", "None")
-
-		b.ik_bone_ids = bone_data.get("bone_ids", []).duplicate(true)
-		
 		b.phys_pos_damping = bone_data.get("phys_pos_damping", 0.0)
 		b.phys_sway = bone_data.get("phys_sway", 0.0)
 		b.phys_scale_damping = bone_data.get("phys_scale_damping", 0.0)
@@ -598,20 +593,24 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 		bones.append(b)
 
 	for ik_data in data.get("inverse_kinematics", []):
-		var ik = {
-			"family_id": int(ik_data.get("family_id", -1)),
-			"constraint": ik_data.get("constraint", "None"),
-			"init_constraint": ik_data.get("init_constraint", ik_data.get("constraint", "None")),
-			"mode": ik_data.get("mode", "FABRIK"),
-			"init_mode": ik_data.get("init_mode", ik_data.get("mode", "FABRIK")),
-			"target_id": int(ik_data.get("target_id", -1)),
-			"bone_ids": ik_data.get("bone_ids", []).duplicate(true),
-			"mimic_target": ik_data.get("mimic_target", false),
-			"init_mimic_target": ik_data.get("init_mimic_target", ik_data.get("mimic_target", false)),
-		}
-		arm.inverse_kinematics.append(ik)
-		if ik["bone_ids"].size() > 0:
-			arm.ik_root_ids.append(ik["bone_ids"][0])
+		var inv_kinematics : InverseKinematics = InverseKinematics.new()
+		
+		inv_kinematics.family_id = int(ik_data.get("family_id", -1))
+		inv_kinematics.constraint = ik_data.get("constraint", "None")
+		inv_kinematics.init_constraint = ik_data.get("init_constraint", inv_kinematics.constraint)
+		inv_kinematics.mode = ik_data.get("mode", "FABRIK")
+		inv_kinematics.init_mode = ik_data.get("init_mode", "FABRIK")
+		
+		inv_kinematics.target_id = int(ik_data.get("target_id", -1))
+		
+		inv_kinematics.bone_ids =  ik_data.get("bone_ids", [])
+		inv_kinematics.mimic_target =  ik_data.get("mimic_target", false)
+		inv_kinematics.init_mimic_target =  ik_data.get("init_mimic_target", inv_kinematics.mimic_target)
+		
+
+		arm.inverse_kinematics.append(inv_kinematics)
+		if inv_kinematics.bone_ids.size() > 0:
+			arm.ik_root_ids.append(inv_kinematics.bone_ids[0])
 
 	var physics_array = data.get("physics", [])
 	arm.physics = physics_array.duplicate(true)
@@ -713,44 +712,6 @@ static func build_armature_from_dict(data: Dictionary) -> Armature:
 		visual.init_tint = Color(init_tint.get('r', 1.0), init_tint.get('g', 1.0), init_tint.get('b', 1.0), init_tint.get('a', 1.0))
 		
 		arm.visuals.append(visual)
-
-	if arm.inverse_kinematics.is_empty():
-		var ik_idx := 0
-		for b in bones:
-			if b.ik_bone_ids.size() > 0:
-				b.ik_family_id = ik_idx
-				arm.inverse_kinematics.append({
-					"constraint": b.ik_constraint,
-					"init_constraint": b.ik_constraint,
-					"mode": b.ik_mode,
-					"init_mode": b.ik_mode,
-					"target_id": b.ik_target_id,
-					"bone_ids": b.ik_bone_ids.duplicate(true),
-					"mimic_target": b.mimic_target,
-					"init_mimic_target": b.init_mimic_target,
-				})
-				ik_idx += 1
-	else:
-		for b in bones:
-			if b.inverse_kinematics_id != -1:
-				b.ik_family_id = b.inverse_kinematics_id
-
-	if arm.inverse_kinematics.is_empty():
-		var ik_idx := 0
-		for b in bones:
-			if b.ik_bone_ids.size() > 0:
-				b.ik_family_id = ik_idx
-				arm.inverse_kinematics.append({
-					"constraint": b.ik_constraint,
-					"init_constraint": b.ik_constraint,
-					"mode": b.ik_mode,
-					"init_mode": b.ik_mode,
-					"target_id": b.ik_target_id,
-					"bone_ids": b.ik_bone_ids.duplicate(true),
-					"mimic_target": b.mimic_target,
-					"init_mimic_target": b.init_mimic_target,
-				})
-				ik_idx += 1
 
 	arm.bones = bones.duplicate_deep(1)
 	return arm
