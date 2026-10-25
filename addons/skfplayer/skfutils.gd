@@ -3,36 +3,14 @@ class_name SkelformUtils
 
 # ---------- Interpolation
 
-static func interpolate_value(current: int, max: int,start_val: float,end_val: float,start_handle: Vector2,end_handle: Vector2) -> float:
-	if(start_handle.y == 999.0 && end_handle.y == 999.0):
-		return start_val;
-
-	if(max == 0 || current >= max):
-		return end_val;
-	
-	var initial = current / max
-	var t = initial
-	for i in 5 :
-		var x = cubic_bezier(t, start_handle.x, end_handle.x)
-		var dx = cubic_bezier_derivative(t, start_handle.x, end_handle.x)
-		if(abs(dx) < 1e-5):
-			break
-		
-		t -= (x - initial) / dx
-		t = clamp(t, 0.0, 1.0)
-	
-
-	var progress = cubic_bezier(t, start_handle.y, end_handle.y)
-	return start_val + (end_val - start_val) * progress
-
 static func interpolate(current: int,  max: int,  start_val: float, end_val: float,  start_handle: Vector2, end_handle: Vector2) -> float:
 	if(start_handle.y == 999.0 && end_handle.y == 999.0):
 		return start_val;
 	if(max == 0 || current >= max):
 		return end_val;
 
-	var initial := current / float(max)
-	var t := initial
+	var initial : float = current / float(max)
+	var t : float = initial
 	for i in range(5):
 		var x := cubic_bezier(t, start_handle.x, end_handle.x)
 		var dx := cubic_bezier_derivative(t, start_handle.x, end_handle.x)
@@ -96,8 +74,8 @@ static func point_bones(bones: Array, family) -> void:
 		tip_pos = bone.pos
 
 static func rotate_vec2(point: Vector2, rot: float) -> Vector2:
-	var c := cos(rot)
-	var s := sin(rot)
+	var c : float = cos(rot)
+	var s : float = sin(rot)
 	return Vector2(point.x * c - point.y * s,point.x * s + point.y * c)
 
 static func shortest_angle_delta(from: float, to: float) -> float:

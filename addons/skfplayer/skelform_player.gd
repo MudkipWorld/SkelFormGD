@@ -192,49 +192,20 @@ func draw_skeleton(bones: Array, visuals: Array, atlases: Array, styles: Array) 
 	if bones.is_empty():
 		return
 
-	var order = {}
-	for n in range(bones.size()):
-		order[bones[n]] = n
-	
-	for n in range(bones.size()):
-		order[bones[n]] = n
-
 	bones.sort_custom(func(a, b):
-		var a_has = a.visuals_id != -1
-		var b_has = b.visuals_id != -1
-
-		if a_has != b_has:
-			return a_has
-
-		if !a_has:
-			return a.id < b.id
-
 		var va = visuals[a.visuals_id]
 		var vb = visuals[b.visuals_id]
 
-		if va.zindex != vb.zindex:
-			return va.zindex < vb.zindex
-
-		return a.id < b.id
+		return va.zindex < vb.zindex
 	)
 
 	var atlas_batches = {}
-
-	var hidden_cache = {}
-	var bones_by_id = bones.duplicate()
-	bones_by_id.sort_custom(func(a, b): return a.id < b.id)
-	
-	for bone in bones_by_id:
-		var hidden = bone.hidden
-		if bone.parent_id != -1:
-			hidden = hidden or hidden_cache.get(bone.parent_id, false)
-		hidden_cache[bone.id] = hidden
 
 	for bone in bones:
 		if bone.visuals_id == -1:
 			continue
 
-		if hidden_cache.get(bone.id, false):
+		if bone.hidden:
 			continue
 
 		var visual = visuals[bone.visuals_id]

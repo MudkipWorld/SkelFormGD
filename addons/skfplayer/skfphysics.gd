@@ -224,7 +224,7 @@ static func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
 	if chain.size() < 2:
 		return
 
-	var dist := [0.0]
+	var dist : Array = [0.0]
 	var max_length = (chain[-1].pos - root).length()
 	var curr_length = 0.0
 
@@ -240,8 +240,5 @@ static func arc_ik(chain: Array, root: Vector2, target: Vector2) -> void:
 
 	for i in range(1, chain.size()):
 		var b = chain[i]
-		var pos = Vector2(
-			b.pos.x * valley,
-			root.y + (1.0 - peak) * sin(dist[i] * PI) * base_mag
-		)
+		var pos = Vector2(b.pos.x * valley,root.y + (1.0 - peak) * sin(dist[i] * PI) * base_mag)
 		b.pos = (pos - root).rotated(base_angle) + root
