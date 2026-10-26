@@ -168,6 +168,9 @@ class AnimationData:
 	var name: String
 	var keyframes: Array
 	var fps: int
+	var current_frame : int
+	var prev_frame : int 
+	var time_accum : float
 	func _init(_name="", _fps=60):
 		name = _name
 		fps = _fps

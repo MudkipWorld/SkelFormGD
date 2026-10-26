@@ -9,12 +9,9 @@ var anim_finished_once : bool = false
 var runtime : SkelformRuntime = SkelformRuntime.new()
 var armature : SkelformRuntime.Armature
 var constructed_bones: Array = []
-var current_frame: int = 0
 var anim_length: int = 0
 var img_atlas  : Array = []
 var text_atlases : Array = []
-var time_accum : float = 0.0
-var prev_frame : int = 0
 var frame_skip_count : int = 0
 var opts : SkelformRuntime.ConstructOptions = SkelformRuntime.ConstructOptions.new()
 
@@ -132,16 +129,15 @@ func _physics_process(delta: float) -> void:
 func init_animate():
 	frame_skip_count += 1
 	var arm_exists : bool = !armature or armature.animations.is_empty()
-	var anim = get_animation_data(animations.values()[0].anim_name)
+	var anim : SkelformRuntime.AnimationData = get_animation_data(animations.values()[0].anim_name)
 	anim_length = anim.keyframes[-1].frame + 1
 	if anim_length == 0: return
 	if auto_play && !OS.has_feature("editor_hint"):
 		playing = true
-	current_frame = 0
-	runtime.animate(armature, [anim], [current_frame], [smoothing])
+	runtime.animate(armature, [anim], [0], [smoothing])
 	constructed_bones = runtime.construct(opts, armature, 0.16)
 	queue_redraw()
-	prev_frame = current_frame
+	anim.prev_frame = 0
 	frame_skip_count = 0
 
 func animate(delta : float):
@@ -150,30 +146,30 @@ func animate(delta : float):
 	var arm_exists : bool = armature != null && is_instance_valid(armature)
 
 	if !arm_exists: return
-	
+
 	for an in animations.values():
 		if an.playing:
-			var anim = get_animation_data(an.anim_name)
+			var anim : SkelformRuntime.AnimationData = get_animation_data(an.anim_name)
 			anim_length = anim.keyframes[-1].frame + 1
-			time_accum += delta
+			anim.time_accum += delta
 
 			if anim_length == 0: return
-			if (current_frame > (anim_length - frame_skip)):
+			if (anim.current_frame > (anim_length - frame_skip)):
 				if !anim_finished_once:
 					animation_finished.emit(an.anim_name)
 					
 				if !looping:
 					return
 
-			current_frame = int(time_accum * an.fps) % anim_length
+			anim.current_frame = int(anim.time_accum * an.fps) % anim_length
 			
-			if prev_frame == current_frame: return
+			if anim.prev_frame == anim.current_frame: return
 			if frame_skip_count < frame_skip: return
 
-			runtime.animate(armature, [anim], [current_frame], [smoothing])
+			runtime.animate(armature, [anim], [anim.current_frame], [smoothing])
 			constructed_bones = runtime.construct(opts, armature, delta)
 			queue_redraw()
-			prev_frame = current_frame
+			anim.prev_frame = anim.current_frame
 			frame_skip_count = 0
 
 func get_animation_data(anim_name : String) -> SkelformRuntime.AnimationData:
@@ -183,6 +179,7 @@ func get_animation_data(anim_name : String) -> SkelformRuntime.AnimationData:
 	return null
 
 #--- Drawing functions
+
 func _draw() -> void:
 	if constructed_bones.is_empty():
 		return
@@ -192,24 +189,33 @@ func draw_skeleton(bones: Array, visuals: Array, atlases: Array, styles: Array) 
 	if bones.is_empty():
 		return
 
-	bones.sort_custom(func(a, b):
-		var va = visuals[a.visuals_id]
-		var vb = visuals[b.visuals_id]
+	var order : Dictionary = {}
+	for i in bones.size():
+		order[bones[i]] = i
 
-		return va.zindex < vb.zindex
+	bones.sort_custom(func(a, b):
+		var a_id: int = a.visuals_id
+		var b_id: int = b.visuals_id
+		var a_z : int = 0
+		var b_z : int = 0
+		if a_id >= 0 and a_id < visuals.size():
+			a_z = visuals[a_id].zindex
+		if b_id >= 0 and b_id < visuals.size():
+			b_z = visuals[b_id].zindex
+		if a_z != b_z:
+			return a_z < b_z
+		return order[a] < order[b]
 	)
 
-	var atlas_batches = {}
+	var drawn_visuals : Dictionary = {}
 
-	for bone in bones:
+	for bone : SkelformRuntime.Bone in bones:
 		if bone.visuals_id == -1:
 			continue
-
 		if bone.hidden:
 			continue
 
-		var visual = visuals[bone.visuals_id]
-
+		var visual : SkelformRuntime.Visual = visuals[bone.visuals_id]
 		var tex = get_bone_texture(visual.tex, styles)
 		if tex == null:
 			continue
@@ -222,34 +228,43 @@ func draw_skeleton(bones: Array, visuals: Array, atlases: Array, styles: Array) 
 		if atlas == null:
 			continue
 
-		if !atlas_batches.has(atlas_idx):
-			atlas_batches[atlas_idx] = {
+		var key := Vector2i(visual.zindex, atlas_idx)
+		if !drawn_visuals.has(key):
+			drawn_visuals[key] = {
 				verts = PackedVector2Array(),
 				uvs = PackedVector2Array(),
 				colors = PackedColorArray(),
-				indices = PackedInt32Array()
+				indices = PackedInt32Array(),
 			}
 
+		var drawn = drawn_visuals[key]
 		if visual.vertices.is_empty():
-			batch_sprite(atlas_batches[atlas_idx], bone, visual, tex, atlas)
+			create_sprite(drawn, bone, visual, tex, atlas)
 		else:
-			batch_mesh(atlas_batches[atlas_idx], bone, visual, tex, atlas)
+			create_mesh(drawn, bone, visual, tex, atlas)
 
-	for atlas_idx in atlas_batches:
-		var batch = atlas_batches[atlas_idx]
+	var keys = drawn_visuals.keys()
+	keys.sort_custom(func(a, b):
+		if a.x != b.x:
+			return a.x < b.x
+		return a.y < b.y
+	)
+
+	for key in keys:
+		var drawn = drawn_visuals[key]
 		RenderingServer.canvas_item_add_triangle_array(
 			get_canvas_item(),
-			batch.indices,
-			batch.verts,
-			batch.colors,
-			batch.uvs,
+			drawn.indices,
+			drawn.verts,
+			drawn.colors,
+			drawn.uvs,
 			PackedInt32Array(),
 			PackedFloat32Array(),
-			atlases[atlas_idx].get_rid()
+			atlases[key.y].get_rid()
 		)
 
-func batch_sprite(batch: Dictionary, bone, visual, tex, atlas: Texture2D) -> void:
-	var start = batch.verts.size()
+func create_sprite(drawn: Dictionary, bone, visual, tex, atlas: Texture2D) -> void:
+	var start = drawn.verts.size()
 
 	var dir := -1.0 if bone.scale.x < 0.0 else 1.0
 
@@ -267,48 +282,48 @@ func batch_sprite(batch: Dictionary, bone, visual, tex, atlas: Texture2D) -> voi
 	var c : float = cos(final_rot)
 	var s : float = sin(final_rot)
 
-	batch.verts.append(transform_point(Vector2(-half.x, -half.y) + pivot , center , c, s))
-	batch.verts.append(transform_point(Vector2( half.x, -half.y) +  pivot , center , c, s))
-	batch.verts.append(transform_point(Vector2( half.x,  half.y) +  pivot , center , c, s))
-	batch.verts.append(transform_point(Vector2(-half.x,  half.y) +  pivot , center , c, s))
+	drawn.verts.append(transform_point(Vector2(-half.x, -half.y) + pivot, center, c, s))
+	drawn.verts.append(transform_point(Vector2( half.x, -half.y) + pivot, center, c, s))
+	drawn.verts.append(transform_point(Vector2( half.x,  half.y) + pivot, center, c, s))
+	drawn.verts.append(transform_point(Vector2(-half.x,  half.y) + pivot, center, c, s))
 
-	batch.colors.append_array([
-		bone.tint,
-		bone.tint,
-		bone.tint,
-		bone.tint
+	drawn.colors.append_array([
+		visual.tint,
+		visual.tint,
+		visual.tint,
+		visual.tint,
 	])
 
 	var atlas_size := Vector2(atlas.get_width(), atlas.get_height())
 
-	batch.uvs.append(tex.offset / atlas_size)
-	batch.uvs.append((tex.offset + Vector2(tex.size.x, 0.0)) / atlas_size)
-	batch.uvs.append((tex.offset + tex.size) / atlas_size)
-	batch.uvs.append((tex.offset + Vector2(0.0, tex.size.y)) / atlas_size)
+	drawn.uvs.append(tex.offset / atlas_size)
+	drawn.uvs.append((tex.offset + Vector2(tex.size.x, 0.0)) / atlas_size)
+	drawn.uvs.append((tex.offset + tex.size) / atlas_size)
+	drawn.uvs.append((tex.offset + Vector2(0.0, tex.size.y)) / atlas_size)
 
-	batch.indices.append_array([
+	drawn.indices.append_array([
 		start + 0, start + 1, start + 2,
-		start + 0, start + 2, start + 3
+		start + 0, start + 2, start + 3,
 	])
 
-func batch_mesh(batch: Dictionary, bone, visual, tex, atlas: Texture2D) -> void:
-	var start = batch.verts.size()
+func create_mesh(drawn: Dictionary, bone, visual, tex, atlas: Texture2D) -> void:
+	var start = drawn.verts.size()
 
 	var atlas_size := Vector2(atlas.get_width(), atlas.get_height())
 	var uv_offset = tex.offset / atlas_size
 	var uv_scale = tex.size / atlas_size
 
 	for vert in visual.vertices:
-		batch.verts.append(vert.pos)
-		batch.uvs.append(uv_offset + vert.uv * uv_scale)
-		batch.colors.append(visual.tint)
+		drawn.verts.append(vert.pos)
+		drawn.uvs.append(uv_offset + vert.uv * uv_scale)
+		drawn.colors.append(visual.tint)
 
 	var src: PackedInt32Array = visual.indices
 	if src.is_empty():
 		src = PackedInt32Array(visual.triangles)
 
 	for idx in src:
-		batch.indices.append(start + idx)
+		drawn.indices.append(start + idx)
 
 func transform_point(p: Vector2, pos: Vector2, cos_r: float, sin_r: float) -> Vector2:
 	return Vector2(p.x * cos_r - p.y * sin_r, p.x * sin_r + p.y * cos_r) + pos
@@ -345,25 +360,27 @@ func get_animation_names(working_only : bool = false) -> PackedStringArray:
 
 func disable_all_animation():
 	anim_finished_once = false
-	current_frame = 0
-	prev_frame = 0
-	time_accum = 0
 	for i in animations.keys():
 		animations[i].playing = false
+		var anim : SkelformRuntime.AnimationData = get_animation_data(i)
+		anim.current_frame = 0
+		anim.prev_frame = 0
+		anim.time_accum = 0.0
 
 func set_animation(anim : String, play : bool):
 	anim_finished_once = false
-	current_frame = 0
-	prev_frame = 0
-	time_accum = 0
+	var anim_data : SkelformRuntime.AnimationData = get_animation_data(anim)
+	anim_data.current_frame = 0
+	anim_data.prev_frame = 0
+	anim_data.time_accum = 0.0
 	animations[anim].playing = play
 
 func set_animations(anims : PackedStringArray, play : bool):
 	anim_finished_once = false
-	current_frame = 0
-	prev_frame = 0
-	time_accum = 0
 	for i in anims:
+		animations[i].current_frame = 0
+		animations[i].prev_frame = 0
+		animations[i].time_accum = 0.0
 		animations[i].playing = play
 
 func get_bone_names() -> PackedStringArray:
