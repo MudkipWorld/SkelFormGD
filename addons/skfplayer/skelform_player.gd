@@ -9,9 +9,12 @@ var anim_finished_once : bool = false
 var runtime : SkelformRuntime = SkelformRuntime.new()
 var armature : SkelformRuntime.Armature
 var constructed_bones: Array = []
+var current_frame: int = 0
 var anim_length: int = 0
 var img_atlas  : Array = []
 var text_atlases : Array = []
+var time_accum : float = 0.0
+var prev_frame : int = 0
 var frame_skip_count : int = 0
 var opts : SkelformRuntime.ConstructOptions = SkelformRuntime.ConstructOptions.new()
 
@@ -129,15 +132,16 @@ func _physics_process(delta: float) -> void:
 func init_animate():
 	frame_skip_count += 1
 	var arm_exists : bool = !armature or armature.animations.is_empty()
-	var anim : SkelformRuntime.AnimationData = get_animation_data(animations.values()[0].anim_name)
+	var anim = get_animation_data(animations.values()[0].anim_name)
 	anim_length = anim.keyframes[-1].frame + 1
 	if anim_length == 0: return
 	if auto_play && !OS.has_feature("editor_hint"):
 		playing = true
-	runtime.animate(armature, [anim], [0], [smoothing])
+	current_frame = 0
+	runtime.animate(armature, [anim], [current_frame], [smoothing])
 	constructed_bones = runtime.construct(opts, armature, 0.16)
 	queue_redraw()
-	anim.prev_frame = 0
+	prev_frame = current_frame
 	frame_skip_count = 0
 
 func animate(delta : float):
@@ -146,30 +150,30 @@ func animate(delta : float):
 	var arm_exists : bool = armature != null && is_instance_valid(armature)
 
 	if !arm_exists: return
-
+	
 	for an in animations.values():
 		if an.playing:
-			var anim : SkelformRuntime.AnimationData = get_animation_data(an.anim_name)
+			var anim = get_animation_data(an.anim_name)
 			anim_length = anim.keyframes[-1].frame + 1
-			anim.time_accum += delta
+			time_accum += delta
 
 			if anim_length == 0: return
-			if (anim.current_frame > (anim_length - frame_skip)):
+			if (current_frame > (anim_length - frame_skip)):
 				if !anim_finished_once:
 					animation_finished.emit(an.anim_name)
 					
 				if !looping:
 					return
 
-			anim.current_frame = int(anim.time_accum * an.fps) % anim_length
+			current_frame = int(time_accum * an.fps) % anim_length
 			
-			if anim.prev_frame == anim.current_frame: return
+			if prev_frame == current_frame: return
 			if frame_skip_count < frame_skip: return
 
-			runtime.animate(armature, [anim], [anim.current_frame], [smoothing])
+			runtime.animate(armature, [anim], [current_frame], [smoothing])
 			constructed_bones = runtime.construct(opts, armature, delta)
 			queue_redraw()
-			anim.prev_frame = anim.current_frame
+			prev_frame = current_frame
 			frame_skip_count = 0
 
 func get_animation_data(anim_name : String) -> SkelformRuntime.AnimationData:
@@ -360,27 +364,25 @@ func get_animation_names(working_only : bool = false) -> PackedStringArray:
 
 func disable_all_animation():
 	anim_finished_once = false
+	current_frame = 0
+	prev_frame = 0
+	time_accum = 0
 	for i in animations.keys():
 		animations[i].playing = false
-		var anim : SkelformRuntime.AnimationData = get_animation_data(i)
-		anim.current_frame = 0
-		anim.prev_frame = 0
-		anim.time_accum = 0.0
 
 func set_animation(anim : String, play : bool):
 	anim_finished_once = false
-	var anim_data : SkelformRuntime.AnimationData = get_animation_data(anim)
-	anim_data.current_frame = 0
-	anim_data.prev_frame = 0
-	anim_data.time_accum = 0.0
+	current_frame = 0
+	prev_frame = 0
+	time_accum = 0
 	animations[anim].playing = play
 
 func set_animations(anims : PackedStringArray, play : bool):
 	anim_finished_once = false
+	current_frame = 0
+	prev_frame = 0
+	time_accum = 0
 	for i in anims:
-		animations[i].current_frame = 0
-		animations[i].prev_frame = 0
-		animations[i].time_accum = 0.0
 		animations[i].playing = play
 
 func get_bone_names() -> PackedStringArray:
